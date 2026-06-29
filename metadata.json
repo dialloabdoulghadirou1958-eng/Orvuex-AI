@@ -1,0 +1,6 @@
+{
+  "name": "orvuex ai",
+  "description": "Interface de chat AI multi-modèles avec configuration locale des clés API (BYOK).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
