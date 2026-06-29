@@ -8,6 +8,7 @@ interface HistorySidebarProps {
   currentConversationId: string | null;
   onSelectConversation: (id: string) => void;
   onDeleteConversation: (id: string) => void;
+  onDeleteAllConversations: () => void;
   userEmail?: string;
   onSignUpClick?: () => void;
 }
@@ -19,6 +20,7 @@ export function HistorySidebar({
   currentConversationId, 
   onSelectConversation, 
   onDeleteConversation,
+  onDeleteAllConversations,
   userEmail,
   onSignUpClick
 }: HistorySidebarProps) {
@@ -37,8 +39,8 @@ export function HistorySidebar({
         transform transition-transform duration-300 ease-in-out flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        {/* Search Bar */}
-        <div className="p-3">
+        {/* Search Bar & Actions */}
+        <div className="p-3 space-y-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input
@@ -47,6 +49,15 @@ export function HistorySidebar({
               className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-2 pl-9 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700 transition-all"
             />
           </div>
+          {conversations.length > 0 && (
+            <button 
+              onClick={onDeleteAllConversations}
+              className="w-full flex items-center justify-center gap-2 py-1.5 px-3 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Tout supprimer
+            </button>
+          )}
         </div>
 
         {/* Chat History List */}

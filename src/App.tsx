@@ -178,6 +178,19 @@ export default function App() {
     }
   };
 
+  const handleDeleteAllConversations = async () => {
+    setConversations([]);
+    setCurrentConversationId(null);
+    if (!session?.user) {
+      localStorage.removeItem('orvuex_guest_convs');
+    } else if (isSupabaseConfigured) {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        await supabase.from('conversations').delete().eq('user_id', userData.user.id);
+      }
+    }
+  };
+
   const handleUpdateConversation = (conversation: Conversation) => {
     setConversations(prev => {
       const exists = prev.find(c => c.id === conversation.id);
@@ -223,6 +236,7 @@ export default function App() {
             currentConversationId={currentConversationId}
             onSelectConversation={handleSelectConversation}
             onDeleteConversation={handleDeleteConversation}
+            onDeleteAllConversations={handleDeleteAllConversations}
             userEmail={session?.user?.email}
             onSignUpClick={() => setIsGuest(false)}
           />

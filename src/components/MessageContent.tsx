@@ -2,12 +2,16 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface MessageContentProps {
   content: string;
+  isLast?: boolean;
+  isStreaming?: boolean;
 }
 
-export function MessageContent({ content }: MessageContentProps) {
+export function MessageContent({ content, isLast, isStreaming }: MessageContentProps) {
   // Le parseur doit être capable de gérer les blocs "incomplets" pendant le streaming
   const preprocessMarkdown = (text: string) => {
     let processed = text;
@@ -15,13 +19,24 @@ export function MessageContent({ content }: MessageContentProps) {
     if (codeBlockCount % 2 !== 0) {
       processed += '\n```';
     }
+    
+    // Add cursor effect for the last message if streaming
+    if (isLast && isStreaming) {
+      // If we are currently inside an unclosed code block, we append the cursor inside it before closing
+      if (codeBlockCount % 2 !== 0) {
+        processed = processed.replace(/\n```$/, ' ▍\n```');
+      } else {
+        processed += ' ▍';
+      }
+    }
+    
     return processed;
   };
 
   const processedContent = preprocessMarkdown(content);
 
   return (
-    <div className="text-[15px] leading-relaxed space-y-4 break-words overflow-x-auto max-w-full">
+    <div className="text-[15px] leading-relaxed space-y-4 break-words w-full min-w-0">
       <Markdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -31,8 +46,8 @@ export function MessageContent({ content }: MessageContentProps) {
           ol: ({ children }) => <ol className="list-decimal pl-5 mb-4 space-y-1 text-zinc-100">{children}</ol>,
           li: ({ children }) => <li className="pl-1">{children}</li>,
           table: ({ children }) => (
-            <div className="w-full overflow-x-auto my-4 max-w-full">
-              <table className="w-full min-w-[400px] text-left border-collapse">
+            <div className="overflow-x-auto w-full max-w-full my-4 rounded-lg border border-zinc-800/50 bg-zinc-900/20">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 {children}
               </table>
             </div>
@@ -78,7 +93,7 @@ function CodeBlock({ language, code }: { language: string, code: string }) {
   };
 
   return (
-    <div className="my-4 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
+    <div className="my-4 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 w-full min-w-0">
       <div className="flex items-center justify-between px-4 py-2 bg-zinc-900 border-b border-zinc-800">
         <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{language}</span>
         <button
@@ -98,10 +113,15 @@ function CodeBlock({ language, code }: { language: string, code: string }) {
           )}
         </button>
       </div>
-      <div className="p-4 overflow-x-auto w-full text-sm font-mono text-zinc-200">
-        <pre className="!m-0">
-          <code className="whitespace-pre">{code}</code>
-        </pre>
+      <div className="overflow-x-auto w-full text-sm font-mono">
+        <SyntaxHighlighter
+          language={language}
+          style={vscDarkPlus}
+          customStyle={{ margin: 0, padding: '1rem', background: 'transparent' }}
+          PreTag="div"
+        >
+          {code}
+        </SyntaxHighlighter>
       </div>
     </div>
   );

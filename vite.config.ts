@@ -28,7 +28,21 @@ export default defineConfig(() => {
           related_applications: [],
           iarc_rating_id: 'e84b072d-71b3-4d3e-86ae-31a8ce4e53b7',
           scope_extensions: [
-            { origin: '*.vercel.app' }
+            { origin: 'https://orvuex-ai.vercel.app' }
+          ],
+          shortcuts: [
+            {
+              name: 'Nouveau Chat',
+              short_name: 'Nouveau Chat',
+              description: 'Commencer une nouvelle conversation de chat',
+              url: '/',
+              icons: [
+                {
+                  src: '/pwa-192x192.png',
+                  sizes: '192x192'
+                }
+              ]
+            }
           ],
           start_url: '/',
           scope: '/',
