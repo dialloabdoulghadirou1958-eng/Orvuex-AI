@@ -23,6 +23,62 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
 
+  // Handle popup window communication for OAuth completion
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      // 1. If this is a popup window, watch auth state to close itself and notify opener
+      if (window.opener) {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (session) {
+            try {
+              window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+              setTimeout(() => {
+                window.close();
+              }, 150);
+            } catch (e) {
+              console.error('Error in popup auth notification:', e);
+            }
+          }
+        });
+
+        // Check immediately in case session is already restored
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            try {
+              window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+              setTimeout(() => {
+                window.close();
+              }, 150);
+            } catch (e) {}
+          }
+        });
+
+        return () => subscription.unsubscribe();
+      }
+
+      // 2. If this is the main window, listen for messages from the auth popup
+      const handleMessage = (event: MessageEvent) => {
+        const origin = event.origin;
+        // Accept messages from same run.app or localhost origins
+        if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+          return;
+        }
+
+        if (event.data?.type === 'SUPABASE_AUTH_SUCCESS') {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+              setSession(session);
+              setIsGuest(false);
+            }
+          });
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, []);
+
   useEffect(() => {
     if (isSupabaseConfigured) {
       supabase.auth.getSession().then(({ data: { session } }) => {

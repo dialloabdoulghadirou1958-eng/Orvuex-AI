@@ -37,10 +37,17 @@ export function AuthScreen({ onContinueAsGuest }: AuthScreenProps) {
           password,
         });
         if (authError) throw authError;
-        setMessage("Veuillez vérifier votre email pour confirmer votre inscription.");
+        setMessage("Inscription réussie ! Un e-mail de confirmation vous a été envoyé. Veuillez cliquer sur le lien reçu (vérifiez aussi vos spams) pour activer votre compte avant de vous connecter.");
       }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      const errMsg = err.message || '';
+      if (errMsg.includes('Invalid login credentials') || errMsg.includes('invalid_credentials')) {
+        setError("Adresse e-mail ou mot de passe incorrect. Si vous n'avez pas encore de compte, veuillez cliquer sur 'S'inscrire' ci-dessous. Si vous venez de vous inscrire, assurez-vous de confirmer votre compte par e-mail.");
+      } else if (errMsg.includes('Email not confirmed') || errMsg.includes('email_not_confirmed')) {
+        setError("Votre adresse e-mail n'a pas encore été confirmée. Veuillez cliquer sur le lien de confirmation reçu par e-mail (pensez à regarder dans vos spams).");
+      } else {
+        setError(err.message || 'Une erreur est survenue lors de l\'authentification');
+      }
     } finally {
       setLoading(false);
     }
@@ -51,13 +58,42 @@ export function AuthScreen({ onContinueAsGuest }: AuthScreenProps) {
       setError("Base de données non configurée.");
       return;
     }
+    setLoading(true);
+    setError(null);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      // We skip the default browser redirect to obtain the authorization URL
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          skipBrowserRedirect: true,
+          redirectTo: window.location.origin,
+        },
       });
-      if (error) throw error;
+      if (authError) throw authError;
+
+      if (data?.url) {
+        // Open the Google authorization flow in a popup window
+        const width = 550;
+        const height = 680;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+
+        const popup = window.open(
+          data.url,
+          'orvuex_supabase_google_auth',
+          `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+        );
+
+        if (!popup) {
+          throw new Error("Le bloqueur de fenêtres pop-up a empêché l'ouverture. Veuillez autoriser les pop-ups pour ce site afin de vous connecter avec Google.");
+        }
+      } else {
+        throw new Error("Impossible de générer l'URL de connexion Google.");
+      }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      setError(err.message || 'Une erreur est survenue lors de l\'authentification Google');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,6 +199,8 @@ export function AuthScreen({ onContinueAsGuest }: AuthScreenProps) {
             Continuer sans inscription
           </button>
         </div>
+
+
       </div>
     </div>
   );
