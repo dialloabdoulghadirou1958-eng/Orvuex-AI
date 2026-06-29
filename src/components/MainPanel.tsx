@@ -7,7 +7,7 @@ import { MessageContent } from './MessageContent';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { nativeFetch } from '../lib/nativeFetch';
 
-function Dropdown({ options, value, onChange, placeholder, disabled, loading, icon, label, position = 'bottom', align = 'center' }: any) {
+function Dropdown({ options, value, onChange, placeholder, disabled, loading, icon, label, position = 'bottom', align = 'center', maxTextWidth }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +43,10 @@ function Dropdown({ options, value, onChange, placeholder, disabled, loading, ic
              <img src={icon} alt="" className="w-full h-full object-contain rounded-full" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
           </div>
         )}
-        <span className="text-xs sm:text-sm font-medium text-zinc-200 truncate max-w-[65px] min-[370px]:max-w-[95px] sm:max-w-[150px]">
+        <span 
+          className="text-xs sm:text-sm font-medium text-zinc-200 truncate"
+          style={maxTextWidth ? { maxWidth: `${maxTextWidth}px` } : { maxWidth: '150px' }}
+        >
           {loading ? 'Chargement...' : selectedOption ? selectedOption.name : placeholder}
         </span>
         <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
@@ -161,6 +164,29 @@ export function MainPanel({
   const [isFetchingModels, setIsFetchingModels] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const [maxLabelWidth, setMaxLabelWidth] = useState(80);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+        // Optimal calculation for each dropdown:
+        // Subtract sidebar menu button (~40px), action buttons container (~80px),
+        // and outer horizontal padding/margins (~24px) -> total non-dropdown static width = ~144px.
+        // Subtract dropdown padding (32px), icons/spinners, chevrons, and gaps (~116px total)
+        // Divide remaining space by 2 for both dropdowns
+        const calculated = (width - 144 - 116) / 2;
+        // Minimum label width 45px, maximum 150px
+        setMaxLabelWidth(Math.max(45, Math.min(150, calculated)));
+      }
+    });
+
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     async function fetchModels() {
@@ -543,6 +569,7 @@ export function MainPanel({
             label="Fournisseurs"
             position="bottom"
             align="left"
+            maxTextWidth={maxLabelWidth}
           />
           <Dropdown
             options={
@@ -558,6 +585,7 @@ export function MainPanel({
             label="Modèles"
             position="bottom"
             align="right"
+            maxTextWidth={maxLabelWidth}
           />
         </>
       ) : (
@@ -575,7 +603,7 @@ export function MainPanel({
   return (
     <main className="flex-1 flex flex-col h-full bg-black relative text-zinc-100 min-w-0 w-full">
       {/* Header */}
-      <header className="h-14 flex items-center justify-between px-2 sm:px-4 sticky top-0 bg-black/80 backdrop-blur-md z-10 border-b border-zinc-900/50">
+      <header ref={headerRef} className="h-14 flex items-center justify-between px-2 sm:px-4 sticky top-0 bg-black/80 backdrop-blur-md z-10 border-b border-zinc-900/50">
         <button 
           onClick={onOpenSidebar}
           className="p-2 -ml-1 sm:-ml-2 text-zinc-400 hover:text-zinc-100 rounded-lg transition-colors shrink-0"
