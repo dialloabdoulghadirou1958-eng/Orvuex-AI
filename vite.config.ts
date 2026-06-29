@@ -12,8 +12,9 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icons/openai.png'],
+        includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
         manifest: {
+          id: '/',
           name: 'orvuex ai',
           short_name: 'orvuex',
           description: 'Interface de chat IA moderne côté client (BYOK)',
@@ -23,24 +24,41 @@ export default defineConfig(() => {
           start_url: '/',
           scope: '/',
           orientation: 'portrait',
+          categories: ['productivity', 'utilities', 'education'],
           icons: [
             {
-              src: '/icons/openai.png',
+              src: '/pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any'
             },
             {
-              src: '/icons/openai.png',
+              src: '/pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any'
             },
             {
-              src: '/icons/openai.png',
+              src: '/pwa-maskable-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable'
+            }
+          ],
+          screenshots: [
+            {
+              src: '/screenshot-desktop.png',
+              sizes: '1280x720',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: 'Interface de chat sur Bureau'
+            },
+            {
+              src: '/screenshot-mobile.png',
+              sizes: '1080x1920',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'Interface de chat sur Mobile'
             }
           ]
         },

@@ -1,8 +1,11 @@
-const CACHE_NAME = 'orvuex-ai-v1';
+const CACHE_NAME = 'orvuex-ai-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/pwa-192x192.png',
+  '/pwa-512x512.png',
+  '/pwa-maskable-512x512.png',
   '/icons/openai.png',
   '/icons/gemini.png',
   '/icons/deepseek.png',
