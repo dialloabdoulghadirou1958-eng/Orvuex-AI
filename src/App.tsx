@@ -8,7 +8,7 @@ import { MainPanel } from './components/MainPanel';
 import { SettingsView } from './components/SettingsView';
 import { HistorySidebar } from './components/HistorySidebar';
 import { AuthScreen } from './components/AuthScreen';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { ApiKeys, ProviderId, Conversation, Message } from './types';
 import { Session } from '@supabase/supabase-js';
 
@@ -24,23 +24,25 @@ export default function App() {
   const [loadingInitial, setLoadingInitial] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) setIsGuest(false);
-    });
+    if (isSupabaseConfigured) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        if (session) setIsGuest(false);
+      });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) setIsGuest(false);
-    });
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        if (session) setIsGuest(false);
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   useEffect(() => {
-    if (session) {
+    if (session && isSupabaseConfigured) {
       fetchInitialData();
     } else {
       // Load from localStorage for guests
@@ -113,7 +115,7 @@ export default function App() {
     const newKeys = { ...apiKeys, [providerId]: key };
     setApiKeys(newKeys);
 
-    if (session?.user) {
+    if (session?.user && isSupabaseConfigured) {
       const { error } = await supabase
         .from('user_api_keys')
         .upsert(
@@ -139,7 +141,7 @@ export default function App() {
       return newKeys;
     });
 
-    if (session?.user) {
+    if (session?.user && isSupabaseConfigured) {
       await supabase
         .from('user_api_keys')
         .delete()
@@ -170,7 +172,8 @@ export default function App() {
     if (currentConversationId === id) {
       setCurrentConversationId(null);
     }
-    if (session?.user) {
+
+    if (session?.user && isSupabaseConfigured) {
       await supabase.from('conversations').delete().match({ id });
     }
   };

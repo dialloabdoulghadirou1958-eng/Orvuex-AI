@@ -2,7 +2,7 @@ import { ArrowLeft, Key, Trash2, CheckCircle2, LogOut } from 'lucide-react';
 import { AI_PROVIDERS } from '../lib/providers';
 import { ProviderId, ApiKeys } from '../types';
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface SettingsViewProps {
   apiKeys: ApiKeys;
@@ -23,7 +23,9 @@ export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: Sett
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
   };
 
   const currentProviderInfo = AI_PROVIDERS.find(p => p.id === selectedProvider);
@@ -39,13 +41,15 @@ export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: Sett
           <ArrowLeft className="w-5 h-5" />
           <span className="font-medium">Retour au chat</span>
         </button>
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
-        >
-          <LogOut className="w-4 h-4" />
-          Déconnexion
-        </button>
+        {isSupabaseConfigured && (
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            Déconnexion
+          </button>
+        )}
       </header>
 
       <div className="max-w-xl mx-auto w-full p-4 md:p-6 space-y-6 pb-[max(env(safe-area-inset-bottom),2rem)]">

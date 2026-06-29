@@ -3,7 +3,7 @@ import { Menu, Settings, SquarePen, Plus, ArrowUp, Copy, ThumbsUp, ThumbsDown, S
 import { ApiKeys, ProviderId, Message, Conversation } from '../types';
 import { AI_PROVIDERS } from '../lib/providers';
 import { MessageContent } from './MessageContent';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { nativeFetch } from '../lib/nativeFetch';
 
 interface MainPanelProps {
@@ -33,13 +33,66 @@ export function MainPanel({
     configuredProviders.length > 0 ? configuredProviders[0].id : null
   );
 
+  const [availableModels, setAvailableModels] = useState<{id: string, name: string}[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function fetchModels() {
+      if (!activeProviderId) {
+        setAvailableModels([]);
+        setSelectedModel('');
+        return;
+      }
+      const provider = AI_PROVIDERS.find(p => p.id === activeProviderId);
+      const apiKey = apiKeys[activeProviderId];
+      if (!provider || !apiKey) return;
+
+      setIsFetchingModels(true);
+      try {
+        if (provider.id === 'gemini') {
+          const res = await nativeFetch(`${provider.baseUrl}/models?key=${apiKey}`);
+          if (res.ok) {
+            const data = await res.json();
+            const models = (data.models || []).map((m: any) => ({
+              id: m.name.replace('models/', ''),
+              name: m.displayName || m.name.replace('models/', '')
+            }));
+            setAvailableModels(models);
+            if (models.length > 0) setSelectedModel(models[0].id);
+          }
+        } else {
+          const res = await nativeFetch(`${provider.baseUrl}/models`, {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const models = (data.data || []).map((m: any) => ({
+              id: m.id,
+              name: m.id
+            }));
+            setAvailableModels(models);
+            if (models.length > 0) setSelectedModel(models[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch models", err);
+        setAvailableModels([]);
+        setSelectedModel(provider.defaultModel);
+      } finally {
+        setIsFetchingModels(false);
+      }
+    }
+    fetchModels();
+  }, [activeProviderId, apiKeys]);
 
   // Sync messages when current conversation changes
   useEffect(() => {
     async function loadMessages() {
       if (currentConversation) {
-        if (currentConversation.messages.length === 0) {
+        if (currentConversation.messages.length === 0 && isSupabaseConfigured) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             setIsFetchingMessages(true);
@@ -109,7 +162,11 @@ export function MainPanel({
     const apiKey = apiKeys[activeProvider.id];
     if (!apiKey) return;
 
-    const { data: { session } } = await supabase.auth.getSession();
+    let session = null;
+    if (isSupabaseConfigured) {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+    }
     const isGuest = !session?.user;
     const userId = session?.user?.id;
 
@@ -121,7 +178,7 @@ export function MainPanel({
     if (!convId) {
       convId = Date.now().toString();
       isNewConv = true;
-      if (!isGuest && userId) {
+      if (!isGuest && userId && isSupabaseConfigured) {
         // Insert new conversation in DB
         await supabase.from('conversations').insert({
           id: convId,
@@ -149,18 +206,18 @@ export function MainPanel({
          messages: initialMessages,
          updatedAt: Date.now()
        });
+       if (!isGuest && userId && isSupabaseConfigured) {
+         await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', convId!);
+       }
     } else {
        onUpdateConversation({
          ...currentConversation!,
          messages: initialMessages,
          updatedAt: Date.now()
        });
-       if (!isGuest && userId) {
-         await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', convId!);
-       }
     }
 
-    if (!isGuest && userId) {
+    if (!isGuest && userId && isSupabaseConfigured) {
       // Insert user message to DB
       await supabase.from('messages').insert({
         id: userMsgId,
@@ -177,8 +234,9 @@ export function MainPanel({
 
     try {
       let finalAiContent = '';
+      const modelToUse = selectedModel || activeProvider.defaultModel;
       if (activeProvider.id === 'gemini') {
-        const res = await nativeFetch(`${activeProvider.baseUrl}/models/${activeProvider.defaultModel}:streamGenerateContent?alt=sse&key=${apiKey}`, {
+        const res = await nativeFetch(`${activeProvider.baseUrl}/models/${modelToUse}:streamGenerateContent?alt=sse&key=${apiKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -236,7 +294,7 @@ export function MainPanel({
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: activeProvider.defaultModel,
+            model: modelToUse,
             messages: initialMessages.map(m => ({ role: m.role, content: m.content })),
             stream: true
           })
@@ -281,8 +339,8 @@ export function MainPanel({
         finalAiContent = aiContent;
       }
       
-      // Save final state to DB and update parent
-      if (!isGuest && userId) {
+      // Save final state to update parent
+      if (!isGuest && userId && isSupabaseConfigured) {
         await supabase.from('messages').insert({
           id: aiMsgId,
           conversation_id: convId!,
@@ -305,7 +363,7 @@ export function MainPanel({
       currentMessages = currentMessages.map(m => m.id === aiMsgId ? { ...m, content: errorText } : m);
       setMessages(currentMessages);
       
-      if (!isGuest && userId) {
+      if (!isGuest && userId && isSupabaseConfigured) {
         await supabase.from('messages').insert({
           id: aiMsgId,
           conversation_id: convId!,
@@ -326,6 +384,69 @@ export function MainPanel({
     }
   };
 
+  const modelSelectionUI = (
+    <div className="flex flex-wrap justify-center items-center gap-1">
+      {configuredProviders.length > 0 ? (
+        <>
+          <div className="relative flex items-center group cursor-pointer hover:bg-zinc-900 pl-2 pr-3 py-1 rounded-lg transition-colors border border-transparent hover:border-zinc-800/50">
+            {activeProvider && (
+              <div className="w-5 h-5 mr-2 flex items-center justify-center bg-zinc-950 rounded-full border border-zinc-800 p-0.5 shrink-0">
+                <img 
+                  src={`/icons/${activeProvider.id}.png`} 
+                  alt={activeProvider.name} 
+                  className="w-full h-full object-contain rounded-full"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            <select 
+              className="bg-transparent text-zinc-200 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-5 z-10"
+              value={activeProviderId || ''}
+              onChange={(e) => setActiveProviderId(e.target.value as ProviderId)}
+            >
+              {configuredProviders.map(p => (
+                <option key={p.id} value={p.id} className="bg-zinc-900">{p.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-1 pointer-events-none" />
+          </div>
+
+          <div className="relative flex items-center group cursor-pointer hover:bg-zinc-900 pl-2 pr-3 py-1 rounded-lg transition-colors border border-transparent hover:border-zinc-800/50">
+            <select 
+              className="bg-transparent text-zinc-400 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-5 z-10 max-w-[150px] sm:max-w-[200px] truncate"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              disabled={isFetchingModels || availableModels.length === 0}
+            >
+              {isFetchingModels ? (
+                <option value={selectedModel}>Chargement...</option>
+              ) : availableModels.length > 0 ? (
+                availableModels.map(m => (
+                  <option key={m.id} value={m.id} className="bg-zinc-900">{m.name}</option>
+                ))
+              ) : (
+                <option value={selectedModel || activeProvider?.defaultModel}>
+                  {selectedModel || activeProvider?.defaultModel || 'Modèle par défaut'}
+                </option>
+              )}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-600 absolute right-1 pointer-events-none" />
+          </div>
+        </>
+      ) : (
+        <button 
+          onClick={onOpenSettings}
+          className="text-zinc-400 hover:text-zinc-200 transition-colors text-sm font-medium px-4 py-2 rounded-xl hover:bg-zinc-900 border border-zinc-800 flex items-center gap-2"
+        >
+          <Settings className="w-4 h-4" />
+          Aucun modèle (Ajouter une clé)
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <main className="flex-1 flex flex-col h-full bg-black relative text-zinc-100">
       {/* Header */}
@@ -338,34 +459,7 @@ export function MainPanel({
         </button>
         
         <div className="flex-1 flex justify-center">
-          {configuredProviders.length > 0 ? (
-            <div className="relative flex items-center group cursor-pointer hover:bg-zinc-900 pl-2 pr-3 py-1.5 rounded-lg transition-colors">
-              {activeProvider && (
-                <div className="w-5 h-5 mr-2 flex items-center justify-center bg-zinc-950 rounded-full border border-zinc-800 p-0.5">
-                  <img 
-                    src={`/icons/${activeProvider.id}.png`} 
-                    alt={activeProvider.name} 
-                    className="w-full h-full object-contain rounded-full"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
-              <select 
-                className="bg-transparent text-zinc-200 text-sm font-medium focus:outline-none cursor-pointer appearance-none pr-6 z-10"
-                value={activeProviderId || ''}
-                onChange={(e) => setActiveProviderId(e.target.value as ProviderId)}
-              >
-                {configuredProviders.map(p => (
-                  <option key={p.id} value={p.id} className="bg-zinc-900">{p.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-zinc-500 absolute right-2 pointer-events-none" />
-            </div>
-          ) : (
-            <span className="text-zinc-500 text-sm font-medium">Aucun modèle</span>
-          )}
+          {messages.length > 0 && modelSelectionUI}
         </div>
 
         <div className="flex items-center gap-1">
@@ -389,18 +483,10 @@ export function MainPanel({
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="max-w-3xl mx-auto space-y-8 pb-4">
-          {isFetchingMessages ? (
-            <div className="flex justify-center py-10">
-               <span className="animate-pulse text-zinc-500">Chargement des messages...</span>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-              <h2 className="text-2xl font-semibold text-zinc-300 tracking-tight">orvuex ai</h2>
-              <p className="text-zinc-500 text-sm max-w-sm">
-                {configuredProviders.length === 0 
-                  ? "Veuillez configurer au moins une clé API dans les paramètres pour commencer."
-                  : "Prêt à discuter. Sélectionnez un modèle et posez votre question."}
-              </p>
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
+              <h2 className="text-3xl font-semibold text-zinc-200 tracking-tight">orvuex ai</h2>
+              {modelSelectionUI}
             </div>
           ) : (
             messages.map(msg => (
@@ -410,7 +496,7 @@ export function MainPanel({
                     {msg.content}
                   </div>
                 ) : (
-                  <div className="text-zinc-100 w-full max-w-3xl space-y-2">
+                  <div className="text-zinc-100 w-full max-w-3xl space-y-2 min-w-0 overflow-hidden">
                     {msg.content ? (
                       <MessageContent content={msg.content} />
                     ) : (

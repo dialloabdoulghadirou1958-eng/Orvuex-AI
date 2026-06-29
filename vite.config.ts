@@ -21,6 +21,15 @@ export default defineConfig(() => {
           theme_color: '#09090b',
           background_color: '#09090b',
           display: 'standalone',
+          display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
+          lang: 'fr-FR',
+          dir: 'ltr',
+          prefer_related_applications: false,
+          related_applications: [],
+          iarc_rating_id: 'e84b072d-71b3-4d3e-86ae-31a8ce4e53b7',
+          scope_extensions: [
+            { origin: '*.vercel.app' }
+          ],
           start_url: '/',
           scope: '/',
           orientation: 'portrait',
@@ -63,7 +72,7 @@ export default defineConfig(() => {
           ]
         },
         devOptions: {
-          enabled: true
+          enabled: false
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],

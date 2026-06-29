@@ -21,7 +21,7 @@ export function MessageContent({ content }: MessageContentProps) {
   const processedContent = preprocessMarkdown(content);
 
   return (
-    <div className="text-[15px] leading-relaxed space-y-4">
+    <div className="text-[15px] leading-relaxed space-y-4 break-words overflow-x-auto max-w-full">
       <Markdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -31,17 +31,17 @@ export function MessageContent({ content }: MessageContentProps) {
           ol: ({ children }) => <ol className="list-decimal pl-5 mb-4 space-y-1 text-zinc-100">{children}</ol>,
           li: ({ children }) => <li className="pl-1">{children}</li>,
           table: ({ children }) => (
-            <div className="w-full overflow-x-auto max-w-full block my-4">
-              <table className="w-full min-w-max text-left border-collapse border border-zinc-800 rounded-lg">
+            <div className="w-full overflow-x-auto my-4 max-w-full">
+              <table className="w-full min-w-[400px] text-left border-collapse">
                 {children}
               </table>
             </div>
           ),
-          thead: ({ children }) => <thead className="bg-zinc-900">{children}</thead>,
-          tbody: ({ children }) => <tbody>{children}</tbody>,
-          tr: ({ children }) => <tr className="even:bg-zinc-900/50">{children}</tr>,
-          th: ({ children }) => <th className="bg-zinc-900 text-zinc-100 font-semibold p-3 border border-zinc-800">{children}</th>,
-          td: ({ children }) => <td className="p-3 border border-zinc-800 text-zinc-300">{children}</td>,
+          thead: ({ children }) => <thead className="bg-zinc-800/50">{children}</thead>,
+          tbody: ({ children }) => <tbody className="divide-y divide-zinc-800/50">{children}</tbody>,
+          tr: ({ children }) => <tr className="hover:bg-zinc-900/30 transition-colors">{children}</tr>,
+          th: ({ children }) => <th className="text-zinc-100 font-semibold p-3 border-b border-zinc-800/50 whitespace-nowrap">{children}</th>,
+          td: ({ children }) => <td className="p-3 text-zinc-300 align-top">{children}</td>,
           code(props) {
             const { children, className, node, ...rest } = props;
             const match = /language-(\w+)/.exec(className || '');
