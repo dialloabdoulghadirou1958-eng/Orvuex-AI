@@ -638,7 +638,15 @@ export function MainPanel({
         <div className="max-w-3xl mx-auto space-y-8 pb-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
-              <h2 className="text-3xl font-semibold text-zinc-200 tracking-tight">orvuex ai</h2>
+              <div className="w-36 h-36 flex items-center justify-center transition-transform duration-500 hover:scale-105">
+                <img
+                  src="/pwa-512x512.png"
+                  alt="orvuex ai logo"
+                  className="w-full h-full object-contain animate-fade-in"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <h2 className="text-3xl font-bold text-zinc-100 tracking-tight">orvuex ai</h2>
               {modelSelectionUI}
             </div>
           ) : (

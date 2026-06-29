@@ -107,8 +107,13 @@ export function AuthScreen({ onContinueAsGuest }: AuthScreenProps) {
         )}
 
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black">
-            <Sparkles className="w-6 h-6" />
+          <div className="w-32 h-32 flex items-center justify-center transition-transform duration-500 hover:scale-105">
+            <img
+              src="/pwa-512x512.png"
+              alt="orvuex ai logo"
+              className="w-full h-full object-contain animate-fade-in"
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tight">orvuex ai</h2>
