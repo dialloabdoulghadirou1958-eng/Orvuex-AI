@@ -3,125 +3,11 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-import { VitePWA } from 'vite-plugin-pwa';
-
 export default defineConfig(() => {
   return {
     plugins: [
       react(), 
-      tailwindcss(),
-      VitePWA({
-        registerType: 'autoUpdate',
-        includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png', 'screenshot-desktop.png', 'screenshot-mobile.png', 'icons/*.png'],
-        manifest: {
-          id: '/',
-          name: 'orvuex ai',
-          short_name: 'orvuex',
-          description: 'Interface de chat IA moderne côté client (BYOK)',
-          theme_color: '#09090b',
-          background_color: '#09090b',
-          display: 'standalone',
-          display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
-          lang: 'fr-FR',
-          dir: 'ltr',
-          prefer_related_applications: false,
-          related_applications: [],
-          iarc_rating_id: 'e84b072d-71b3-4d3e-86ae-31a8ce4e53b7',
-          scope_extensions: [
-            { origin: 'https://orvuex-ai.vercel.app' }
-          ],
-          shortcuts: [
-            {
-              name: 'Nouveau Chat',
-              short_name: 'Nouveau Chat',
-              description: 'Commencer une nouvelle conversation de chat',
-              url: '/',
-              icons: [
-                {
-                  src: '/pwa-192x192.png',
-                  sizes: '192x192'
-                }
-              ]
-            }
-          ],
-          start_url: '/',
-          scope: '/',
-          orientation: 'portrait',
-          categories: ['productivity', 'utilities', 'education'],
-          icons: [
-            {
-              src: '/pwa-192x192.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any'
-            },
-            {
-              src: '/pwa-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any'
-            },
-            {
-              src: '/pwa-maskable-512x512.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'maskable'
-            }
-          ],
-          screenshots: [
-            {
-              src: '/screenshot-desktop.png',
-              sizes: '1280x720',
-              type: 'image/png',
-              form_factor: 'wide',
-              label: 'Interface de chat sur Bureau'
-            },
-            {
-              src: '/screenshot-mobile.png',
-              sizes: '1080x1920',
-              type: 'image/png',
-              form_factor: 'narrow',
-              label: 'Interface de chat sur Mobile'
-            }
-          ]
-        },
-        devOptions: {
-          enabled: false
-        },
-        workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-          runtimeCaching: [
-            {
-              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365
-                },
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            },
-            {
-              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'gstatic-fonts-cache',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 * 24 * 365
-                },
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            }
-          ]
-        }
-      })
+      tailwindcss()
     ],
     resolve: {
       alias: {
@@ -130,7 +16,7 @@ export default defineConfig(() => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

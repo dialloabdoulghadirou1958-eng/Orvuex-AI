@@ -72,3 +72,66 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Background Sync
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-messages') {
+    event.waitUntil(
+      Promise.resolve()
+    );
+  }
+});
+
+// Periodic Background Sync
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'sync-models') {
+    event.waitUntil(
+      Promise.resolve()
+    );
+  }
+});
+
+// Push Notifications
+self.addEventListener('push', (event) => {
+  let data = { title: 'orvuex ai', body: 'Nouveau message ou mise à jour disponible !' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'orvuex ai', body: event.data.text() };
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/pwa-192x192.png',
+    badge: '/pwa-192x192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: '1'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click behavior
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
+});
+
