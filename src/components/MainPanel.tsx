@@ -36,17 +36,17 @@ function Dropdown({ options, value, onChange, placeholder, disabled, loading, ic
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 group cursor-pointer hover:bg-zinc-800 px-3 py-2 rounded-xl transition-all border border-zinc-800/50 hover:border-zinc-700 bg-zinc-900 shadow-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`flex items-center gap-1 sm:gap-2 group cursor-pointer hover:bg-zinc-800 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl transition-all border border-zinc-800/50 hover:border-zinc-700 bg-zinc-900 shadow-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {icon && (
-          <div className="w-5 h-5 flex items-center justify-center bg-zinc-950 rounded-full border border-zinc-800 p-0.5 shrink-0">
+          <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center bg-zinc-950 rounded-full border border-zinc-800 p-0.5 shrink-0">
              <img src={icon} alt="" className="w-full h-full object-contain rounded-full" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
           </div>
         )}
-        <span className="text-sm font-medium text-zinc-200 truncate max-w-[100px] sm:max-w-[150px]">
+        <span className="text-xs sm:text-sm font-medium text-zinc-200 truncate max-w-[65px] min-[370px]:max-w-[95px] sm:max-w-[150px]">
           {loading ? 'Chargement...' : selectedOption ? selectedOption.name : placeholder}
         </span>
-        <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -531,7 +531,7 @@ export function MainPanel({
   };
 
   const modelSelectionUI = (
-    <div className="flex justify-center items-center gap-2">
+    <div className="flex justify-center items-center gap-1 sm:gap-2">
       {configuredProviders.length > 0 ? (
         <>
           <Dropdown
@@ -575,19 +575,19 @@ export function MainPanel({
   return (
     <main className="flex-1 flex flex-col h-full bg-black relative text-zinc-100 min-w-0 w-full">
       {/* Header */}
-      <header className="h-14 flex items-center justify-between px-4 sticky top-0 bg-black/80 backdrop-blur-md z-10 border-b border-zinc-900/50">
+      <header className="h-14 flex items-center justify-between px-2 sm:px-4 sticky top-0 bg-black/80 backdrop-blur-md z-10 border-b border-zinc-900/50">
         <button 
           onClick={onOpenSidebar}
-          className="p-2 -ml-2 text-zinc-400 hover:text-zinc-100 rounded-lg transition-colors"
+          className="p-2 -ml-1 sm:-ml-2 text-zinc-400 hover:text-zinc-100 rounded-lg transition-colors shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
         
-        <div className="flex-1 flex justify-center">
+        <div className="flex-1 flex justify-center min-w-0 px-1 sm:px-2">
           {messages.length > 0 && modelSelectionUI}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <button 
             onClick={onNewChat}
             className="p-2 text-zinc-400 hover:text-zinc-100 rounded-lg transition-colors"
