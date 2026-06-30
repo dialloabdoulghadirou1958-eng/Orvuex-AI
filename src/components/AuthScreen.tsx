@@ -62,11 +62,14 @@ export function AuthScreen({ onContinueAsGuest }: AuthScreenProps) {
     setError(null);
     try {
       // We skip the default browser redirect to obtain the authorization URL
+      const origin = window.location.origin;
+      const redirectToUrl = origin.endsWith('/') ? origin : `${origin}/`;
+
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           skipBrowserRedirect: true,
-          redirectTo: window.location.origin,
+          redirectTo: redirectToUrl,
         },
       });
       if (authError) throw authError;

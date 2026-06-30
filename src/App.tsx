@@ -59,8 +59,15 @@ export default function App() {
       // 2. If this is the main window, listen for messages from the auth popup
       const handleMessage = (event: MessageEvent) => {
         const origin = event.origin;
-        // Accept messages from same run.app or localhost origins
-        if (!origin.endsWith('.run.app') && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
+        const currentOrigin = window.location.origin;
+        // Accept messages from same origin, same run.app, vercel.app, or localhost origins
+        if (
+          origin !== currentOrigin &&
+          !origin.endsWith('.run.app') &&
+          !origin.endsWith('.vercel.app') &&
+          !origin.includes('localhost') &&
+          !origin.includes('127.0.0.1')
+        ) {
           return;
         }
 
