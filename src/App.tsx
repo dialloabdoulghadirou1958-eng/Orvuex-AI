@@ -13,7 +13,7 @@ import { ApiKeys, ProviderId, Conversation, Message } from './types';
 import { Session } from '@supabase/supabase-js';
 
 export default function App() {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isGuest, setIsGuest] = useState(() => {
     return localStorage.getItem('orvuex_is_guest') === 'true';
   });
@@ -91,7 +91,7 @@ export default function App() {
   useEffect(() => {
     if (isSupabaseConfigured) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
+        setSession(session || null);
         if (session) {
           setIsGuest(false);
           localStorage.removeItem('orvuex_is_guest');
@@ -101,7 +101,7 @@ export default function App() {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session);
+        setSession(session || null);
         if (session) {
           setIsGuest(false);
           localStorage.removeItem('orvuex_is_guest');
@@ -109,10 +109,14 @@ export default function App() {
       });
 
       return () => subscription.unsubscribe();
+    } else {
+      setSession(null);
     }
   }, []);
 
   useEffect(() => {
+    if (session === undefined) return; // Wait until initial auth check finishes!
+
     if (session && isSupabaseConfigured) {
       // Load user-specific cached data from localStorage immediately for fast, robust restore
       const userConvsKey = `orvuex_convs_${session.user.id}`;
@@ -125,15 +129,25 @@ export default function App() {
         } catch (e) {}
       }
       
+      let hasCachedConvs = false;
       const cachedConvs = localStorage.getItem(userConvsKey);
       if (cachedConvs) {
         try {
           const parsed = JSON.parse(cachedConvs);
           setConversations(parsed);
-          if (parsed.length > 0 && !currentConversationId) {
-            setCurrentConversationId(parsed[0].id);
+          if (parsed.length > 0) {
+            hasCachedConvs = true;
+            if (!currentConversationId) {
+              setCurrentConversationId(parsed[0].id);
+            }
           }
         } catch (e) {}
+      }
+      
+      // If we successfully loaded conversations from local storage, disable the loading screen immediately
+      // so the user can see their history and start writing without waiting for the slow network sync!
+      if (hasCachedConvs) {
+        setLoadingInitial(false);
       }
       
       // Background fetch to sync with Supabase cloud database
@@ -193,9 +207,20 @@ export default function App() {
 
       if (convData && !convError) {
         setConversations(prev => {
+          // Fallback to avoid race condition if local state hasn't resolved yet
+          let baseConvs = prev;
+          if (baseConvs.length === 0 && userId) {
+            const cached = localStorage.getItem(`orvuex_convs_${userId}`);
+            if (cached) {
+              try {
+                baseConvs = JSON.parse(cached);
+              } catch (e) {}
+            }
+          }
+
           // 1. Map conversations fetched from Supabase cloud, keeping messages we already loaded locally
           const mappedCloud = convData.map((c: any) => {
-            const existing = prev.find(ec => ec.id === c.id);
+            const existing = baseConvs.find(ec => ec.id === c.id);
             return {
               id: c.id,
               title: c.title,
@@ -206,7 +231,7 @@ export default function App() {
 
           // 2. Identify local-only conversations (exist in local cache but not in cloud data)
           // We must NEVER delete local-only conversations when syncing! This is crucial for offline-first APK/WebView usage.
-          const localOnly = prev.filter(local => !convData.some((c: any) => c.id === local.id));
+          const localOnly = baseConvs.filter(local => !convData.some((c: any) => c.id === local.id));
 
           // 3. Combine both cloud-synced and local-only conversations
           const combined = [...mappedCloud, ...localOnly];

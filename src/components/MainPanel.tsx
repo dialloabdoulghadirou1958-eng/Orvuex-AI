@@ -277,7 +277,7 @@ export function MainPanel({
       }
     }
     loadMessages();
-  }, [currentConversation?.id]);
+  }, [currentConversation?.id, currentConversation?.messages?.length]);
 
   useEffect(() => {
     if (!activeProviderId && configuredProviders.length > 0) {
