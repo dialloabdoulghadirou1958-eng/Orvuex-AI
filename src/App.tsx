@@ -309,6 +309,7 @@ export default function App() {
             apiKeys={apiKeys} 
             onOpenSettings={() => setCurrentView('settings')}
             onOpenSidebar={() => setIsSidebarOpen(true)}
+            isSidebarOpen={isSidebarOpen}
             currentConversation={currentConversation}
             onUpdateConversation={handleUpdateConversation}
             onNewChat={handleNewChat}

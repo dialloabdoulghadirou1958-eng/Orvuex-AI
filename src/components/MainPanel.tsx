@@ -137,6 +137,7 @@ interface MainPanelProps {
   apiKeys: ApiKeys;
   onOpenSettings: () => void;
   onOpenSidebar: () => void;
+  isSidebarOpen?: boolean;
   currentConversation: Conversation | null;
   onUpdateConversation: (conv: Conversation) => void;
   onNewChat: () => void;
@@ -146,6 +147,7 @@ export function MainPanel({
   apiKeys, 
   onOpenSettings, 
   onOpenSidebar, 
+  isSidebarOpen = false,
   currentConversation,
   onUpdateConversation,
   onNewChat
@@ -601,7 +603,7 @@ export function MainPanel({
   );
 
   return (
-    <main className="flex-1 flex flex-col h-full bg-black relative text-zinc-100 min-w-0 w-full">
+    <main className={`flex-1 flex flex-col h-full bg-black relative text-zinc-100 min-w-0 w-full transition-all duration-300 origin-right ${isSidebarOpen ? 'opacity-40 scale-[0.97] md:opacity-100 md:scale-100 filter brightness-[0.7] md:filter-none' : ''}`}>
       {/* Header */}
       <header ref={headerRef} className="h-14 flex items-center justify-between px-2 sm:px-4 sticky top-0 bg-black/80 backdrop-blur-md z-10 border-b border-zinc-900/50">
         <button 

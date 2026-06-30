@@ -33,7 +33,7 @@ export function HistorySidebar({
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity" 
+          className="fixed inset-0 bg-zinc-950/60 backdrop-blur-sm z-40 md:hidden transition-all duration-300" 
           onClick={onClose}
         />
       )}
