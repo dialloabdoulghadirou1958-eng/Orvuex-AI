@@ -193,30 +193,37 @@ export default function App() {
 
       if (convData && !convError) {
         setConversations(prev => {
-          // Map backend conversations, keeping any messages we loaded locally in this session
-          const mappedConv = convData.map((c: any) => {
+          // 1. Map conversations fetched from Supabase cloud, keeping messages we already loaded locally
+          const mappedCloud = convData.map((c: any) => {
             const existing = prev.find(ec => ec.id === c.id);
             return {
               id: c.id,
               title: c.title,
-              messages: existing ? existing.messages : [],
+              messages: (existing && existing.messages && existing.messages.length > 0) ? existing.messages : [],
               updatedAt: c.updated_at ? new Date(c.updated_at).getTime() : Date.now()
             };
           });
+
+          // 2. Identify local-only conversations (exist in local cache but not in cloud data)
+          // We must NEVER delete local-only conversations when syncing! This is crucial for offline-first APK/WebView usage.
+          const localOnly = prev.filter(local => !convData.some((c: any) => c.id === local.id));
+
+          // 3. Combine both cloud-synced and local-only conversations
+          const combined = [...mappedCloud, ...localOnly];
           
-          // Sort descending by updatedAt (most recent first)
-          mappedConv.sort((a, b) => b.updatedAt - a.updatedAt);
+          // 4. Sort descending by updatedAt (most recent first)
+          combined.sort((a, b) => b.updatedAt - a.updatedAt);
           
           if (userId) {
-            localStorage.setItem(`orvuex_convs_${userId}`, JSON.stringify(mappedConv));
+            localStorage.setItem(`orvuex_convs_${userId}`, JSON.stringify(combined));
           }
           
           // Auto-select first conversation if none selected
-          if (mappedConv.length > 0 && !currentConversationId) {
-            setCurrentConversationId(mappedConv[0].id);
+          if (combined.length > 0 && !currentConversationId) {
+            setCurrentConversationId(combined[0].id);
           }
           
-          return mappedConv;
+          return combined;
         });
       }
     } catch (error) {

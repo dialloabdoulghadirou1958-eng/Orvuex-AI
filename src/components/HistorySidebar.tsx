@@ -41,6 +41,7 @@ export function HistorySidebar({
       <aside className={`
         fixed md:static inset-y-0 left-0 z-50 w-72 bg-zinc-950 border-r border-zinc-800/50
         transform transition-transform duration-300 ease-in-out flex flex-col
+        rounded-r-[2rem] md:rounded-none shadow-[8px_0_32px_rgba(0,0,0,0.8)]
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Search Bar & Actions */}
