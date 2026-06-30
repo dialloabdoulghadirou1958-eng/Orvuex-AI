@@ -639,17 +639,19 @@ export function MainPanel({
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="max-w-3xl mx-auto space-y-8 pb-4">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
-              <div className="w-36 h-36 flex items-center justify-center transition-transform duration-500 hover:scale-105">
+            <div className="flex flex-col items-center justify-center min-h-[340px] h-[calc(100dvh-220px)] sm:h-[60dvh] text-center space-y-6 py-4 shrink-0">
+              <div className="w-36 h-36 flex items-center justify-center transition-transform duration-500 hover:scale-105 shrink-0">
                 <img
                   src="/pwa-512x512.png"
                   alt="orvuex ai logo"
-                  className="w-full h-full object-contain animate-fade-in"
+                  className="w-full h-full object-contain animate-fade-in shrink-0"
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <h2 className="text-3xl font-bold text-zinc-100 tracking-tight">orvuex ai</h2>
-              {modelSelectionUI}
+              <h2 className="text-3xl font-bold text-zinc-100 tracking-tight shrink-0">orvuex ai</h2>
+              <div className="shrink-0">
+                {modelSelectionUI}
+              </div>
             </div>
           ) : (
             <AnimatePresence initial={false}>
