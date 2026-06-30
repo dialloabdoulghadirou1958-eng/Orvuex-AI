@@ -160,24 +160,8 @@ export function LiveVoiceCall({ geminiApiKey, onClose, onSaveMessage }: LiveVoic
 
         ws.onopen = () => {
           if (!active) return;
-          
-          // 1. Send setup parameters to initiate the multimodal session with specified voice configuration
-          const setupMsg = {
-            setup: {
-              model: "models/gemini-3.5-live-translate-preview",
-              generationConfig: {
-                responseModalities: ["AUDIO"],
-                speechConfig: {
-                  voiceConfig: {
-                    prebuiltVoiceConfig: {
-                      voiceName: selectedVoice
-                    }
-                  }
-                }
-              }
-            }
-          };
-          ws.send(JSON.stringify(setupMsg));
+          setStatus('ready');
+          initMicrophone(ws, inputAudioCtx);
         };
 
         ws.onmessage = async (event) => {
