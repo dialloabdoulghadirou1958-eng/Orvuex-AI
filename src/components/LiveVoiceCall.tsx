@@ -164,7 +164,7 @@ export function LiveVoiceCall({ geminiApiKey, onClose, onSaveMessage }: LiveVoic
           // 1. Send setup parameters to initiate the multimodal session with specified voice configuration
           const setupMsg = {
             setup: {
-              model: "models/gemini-2.0-flash-exp",
+              model: "gemini-2.0-flash-exp",
               generationConfig: {
                 responseModalities: ["AUDIO"],
                 speechConfig: {
