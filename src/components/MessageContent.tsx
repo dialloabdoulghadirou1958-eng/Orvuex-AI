@@ -11,18 +11,56 @@ interface MessageContentProps {
   isStreaming?: boolean;
 }
 
+const MarkdownComponents = {
+  p: ({ children }: any) => <p className="mb-4 last:mb-0 text-zinc-100">{children}</p>,
+  strong: ({ children }: any) => <strong className="font-bold text-zinc-50">{children}</strong>,
+  ul: ({ children }: any) => <ul className="list-disc pl-5 mb-4 space-y-1 text-zinc-100">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal pl-5 mb-4 space-y-1 text-zinc-100">{children}</ol>,
+  li: ({ children }: any) => <li className="pl-1">{children}</li>,
+  table: ({ children }: any) => (
+    <div className="overflow-x-auto w-full max-w-full my-4 rounded-lg border border-zinc-800/50 bg-zinc-900/20">
+      <table className="w-full text-left border-collapse min-w-[600px]">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }: any) => <thead className="bg-zinc-800/50">{children}</thead>,
+  tbody: ({ children }: any) => <tbody className="divide-y divide-zinc-800/50">{children}</tbody>,
+  tr: ({ children }: any) => <tr className="hover:bg-zinc-900/30 transition-colors">{children}</tr>,
+  th: ({ children }: any) => <th className="text-zinc-100 font-semibold p-3 border-b border-zinc-800/50 whitespace-nowrap">{children}</th>,
+  td: ({ children }: any) => <td className="p-3 text-zinc-300 align-top">{children}</td>,
+  code(props: any) {
+    const { children, className, ...rest } = props;
+    const match = /language-(\w+)/.exec(className || '');
+    const inline = !match && !className?.includes('language-');
+    
+    if (inline) {
+      return (
+        <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono text-zinc-200" {...rest}>
+          {children}
+        </code>
+      );
+    }
+    
+    const language = match ? match[1] : 'text';
+    const codeString = String(children).replace(/\n$/, '');
+    
+    return <CodeBlock language={language} code={codeString} />;
+  }
+};
+
 export function MessageContent({ content, isLast, isStreaming }: MessageContentProps) {
   // Le parseur doit être capable de gérer les blocs "incomplets" pendant le streaming
   const preprocessMarkdown = (text: string) => {
+    // Optimisation: compter les backticks sans regex globale
+    const codeBlockCount = (text.split('```').length - 1);
     let processed = text;
-    const codeBlockCount = (processed.match(/```/g) || []).length;
     if (codeBlockCount % 2 !== 0) {
       processed += '\n```';
     }
     
     // Add cursor effect for the last message if streaming
     if (isLast && isStreaming) {
-      // If we are currently inside an unclosed code block, we append the cursor inside it before closing
       if (codeBlockCount % 2 !== 0) {
         processed = processed.replace(/\n```$/, ' ▍\n```');
       } else {
@@ -39,43 +77,7 @@ export function MessageContent({ content, isLast, isStreaming }: MessageContentP
     <div className="text-[15px] leading-relaxed space-y-4 break-words w-full min-w-0">
       <Markdown
         remarkPlugins={[remarkGfm]}
-        components={{
-          p: ({ children }) => <p className="mb-4 last:mb-0 text-zinc-100">{children}</p>,
-          strong: ({ children }) => <strong className="font-bold text-zinc-50">{children}</strong>,
-          ul: ({ children }) => <ul className="list-disc pl-5 mb-4 space-y-1 text-zinc-100">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal pl-5 mb-4 space-y-1 text-zinc-100">{children}</ol>,
-          li: ({ children }) => <li className="pl-1">{children}</li>,
-          table: ({ children }) => (
-            <div className="overflow-x-auto w-full max-w-full my-4 rounded-lg border border-zinc-800/50 bg-zinc-900/20">
-              <table className="w-full text-left border-collapse min-w-[600px]">
-                {children}
-              </table>
-            </div>
-          ),
-          thead: ({ children }) => <thead className="bg-zinc-800/50">{children}</thead>,
-          tbody: ({ children }) => <tbody className="divide-y divide-zinc-800/50">{children}</tbody>,
-          tr: ({ children }) => <tr className="hover:bg-zinc-900/30 transition-colors">{children}</tr>,
-          th: ({ children }) => <th className="text-zinc-100 font-semibold p-3 border-b border-zinc-800/50 whitespace-nowrap">{children}</th>,
-          td: ({ children }) => <td className="p-3 text-zinc-300 align-top">{children}</td>,
-          code(props) {
-            const { children, className, node, ...rest } = props;
-            const match = /language-(\w+)/.exec(className || '');
-            const inline = !match && !className?.includes('language-');
-            
-            if (inline) {
-              return (
-                <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono text-zinc-200" {...rest}>
-                  {children}
-                </code>
-              );
-            }
-            
-            const language = match ? match[1] : 'text';
-            const codeString = String(children).replace(/\n$/, '');
-            
-            return <CodeBlock language={language} code={codeString} />;
-          }
-        }}
+        components={MarkdownComponents as any}
       >
         {processedContent}
       </Markdown>
