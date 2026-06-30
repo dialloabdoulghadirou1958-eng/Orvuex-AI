@@ -10,6 +10,8 @@ interface HistorySidebarProps {
   onDeleteConversation: (id: string) => void;
   onDeleteAllConversations: () => void;
   userEmail?: string;
+  userName?: string;
+  userAvatar?: string;
   onSignUpClick?: () => void;
 }
 
@@ -22,6 +24,8 @@ export function HistorySidebar({
   onDeleteConversation,
   onDeleteAllConversations,
   userEmail,
+  userName,
+  userAvatar,
   onSignUpClick
 }: HistorySidebarProps) {
   return (
@@ -116,19 +120,34 @@ export function HistorySidebar({
               <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
             </button>
           ) : (
-            <button className="w-full flex items-center justify-between px-2 py-2 hover:bg-zinc-800/50 rounded-lg transition-colors group">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-zinc-300 flex items-center justify-center shrink-0">
-                  <span className="text-zinc-900 font-medium text-sm">
-                    {userEmail.charAt(0).toUpperCase()}
+            <div className="w-full flex items-center justify-between px-2 py-2 hover:bg-zinc-800/50 rounded-lg transition-colors group">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden border border-zinc-700/50">
+                  {userAvatar ? (
+                    <img 
+                      src={userAvatar} 
+                      alt={userName || 'Avatar'} 
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-zinc-300 font-medium text-sm">
+                      {(userName || userEmail || '?').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col text-left min-w-0">
+                  {userName && (
+                    <span className="text-sm font-semibold text-zinc-100 truncate leading-tight">
+                      {userName}
+                    </span>
+                  )}
+                  <span className={`truncate text-zinc-400 ${userName ? 'text-xs' : 'text-sm font-medium text-zinc-200'}`}>
+                    {userEmail}
                   </span>
                 </div>
-                <span className="text-sm font-medium text-zinc-200 truncate">
-                  {userEmail}
-                </span>
               </div>
-              <MoreHorizontal className="w-4 h-4 text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
+            </div>
           )}
         </div>
       </aside>

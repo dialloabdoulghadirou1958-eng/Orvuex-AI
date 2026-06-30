@@ -301,6 +301,8 @@ export default function App() {
             onDeleteConversation={handleDeleteConversation}
             onDeleteAllConversations={handleDeleteAllConversations}
             userEmail={session?.user?.email}
+            userName={session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name}
+            userAvatar={session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture}
             onSignUpClick={() => setIsGuest(false)}
           />
           <MainPanel 
