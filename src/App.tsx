@@ -33,7 +33,9 @@ export default function App() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           if (session) {
             try {
-              window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+              if (window.opener && typeof window.opener.postMessage === 'function') {
+                window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+              }
               setTimeout(() => {
                 window.close();
               }, 150);
@@ -47,7 +49,9 @@ export default function App() {
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session) {
             try {
-              window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+              if (window.opener && typeof window.opener.postMessage === 'function') {
+                window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+              }
               setTimeout(() => {
                 window.close();
               }, 150);

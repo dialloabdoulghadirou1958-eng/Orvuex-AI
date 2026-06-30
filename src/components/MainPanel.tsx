@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Menu, Settings, SquarePen, Plus, ArrowUp, Copy, ThumbsUp, ThumbsDown, Share, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ApiKeys, ProviderId, Message, Conversation } from '../types';
@@ -6,6 +7,8 @@ import { AI_PROVIDERS } from '../lib/providers';
 import { MessageContent } from './MessageContent';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { nativeFetch } from '../lib/nativeFetch';
+import { LiveVoiceCall } from './LiveVoiceCall';
+import { GoogleGenAI } from '@google/genai';
 
 function Dropdown({ options, value, onChange, placeholder, disabled, loading, icon, label, position = 'bottom', align = 'center', maxTextWidth }: any) {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,9 +16,17 @@ function Dropdown({ options, value, onChange, placeholder, disabled, loading, ic
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      // Don't close if clicking inside the dropdown button container
+      if (containerRef.current && containerRef.current.contains(event.target as Node)) {
+        return;
       }
+      
+      // Don't close if clicking inside the dropdown portal content
+      if ((event.target as Element).closest('.dropdown-portal-content')) {
+        return;
+      }
+
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -25,10 +36,24 @@ function Dropdown({ options, value, onChange, placeholder, disabled, loading, ic
 
   const alignClasses = 
     align === 'left' 
-      ? 'left-0 origin-top-left' 
+      ? 'absolute left-0 origin-top-left' 
       : align === 'right' 
-      ? 'right-0 origin-top-right' 
-      : 'left-1/2 -translate-x-1/2 origin-top';
+      ? 'absolute right-0 origin-top-right' 
+      : align === 'center-screen'
+      ? 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 origin-center shadow-[0_0_100px_rgba(0,0,0,0.5)]'
+      : 'absolute left-1/2 -translate-x-1/2 origin-top';
+
+  const positionClasses = align === 'center-screen' 
+      ? '' 
+      : position === 'bottom' ? 'top-full mt-3' : 'bottom-full mb-3';
+
+  const motionInitial = align === 'center-screen' 
+      ? { opacity: 0, scale: 0.95, filter: 'blur(10px)' } 
+      : { opacity: 0, y: position === 'bottom' ? -15 : 15, scale: 0.95, filter: 'blur(10px)' };
+  
+  const motionExit = align === 'center-screen'
+      ? { opacity: 0, scale: 0.95, filter: 'blur(5px)' }
+      : { opacity: 0, y: position === 'bottom' ? -10 : 10, scale: 0.98, filter: 'blur(5px)' };
 
   return (
     <div className="relative" ref={containerRef}>
@@ -52,42 +77,86 @@ function Dropdown({ options, value, onChange, placeholder, disabled, loading, ic
         <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: position === 'bottom' ? -15 : 15, scale: 0.95, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: position === 'bottom' ? -10 : 10, scale: 0.98, filter: 'blur(5px)' }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className={`absolute ${position === 'bottom' ? 'top-full mt-3' : 'bottom-full mb-3'} ${alignClasses} w-[280px] max-h-[60vh] overflow-y-auto bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800 rounded-2xl shadow-2xl z-50 py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ring-1 ring-white/5`}
-          >
-            {label && <div className="px-5 py-3 text-[11px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-800/50 mb-1">{label}</div>}
-            <div className="flex flex-col p-1.5 gap-0.5">
-              {options.map((opt: any) => (
-                <button
-                  key={opt.id}
-                  onClick={() => {
-                    onChange(opt.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between group ${value === opt.id ? 'bg-indigo-500/10 text-indigo-300' : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100'}`}
+      {align === 'center-screen' ? (
+        createPortal(
+          <AnimatePresence>
+            {isOpen && (
+              <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4">
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                  onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="dropdown-portal-content relative w-full max-w-sm max-h-[70vh] overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl z-[101] py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ring-1 ring-white/5"
                 >
-                  <span className="truncate pr-4 font-medium">{opt.name}</span>
-                  {value === opt.id && <Check className="w-4 h-4 text-indigo-400 shrink-0" />}
-                </button>
-              ))}
-            </div>
-            {options.length === 0 && !loading && (
-              <div className="px-4 py-8 text-sm text-zinc-500 text-center">Aucune option</div>
+                  {label && <div className="px-5 py-3 text-[11px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-800/50 mb-1">{label}</div>}
+                  <div className="flex flex-col p-1.5 gap-0.5">
+                    {options.map((opt: any) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          onChange(opt.id);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-3 rounded-xl text-[15px] sm:text-sm transition-all flex items-center justify-between group ${value === opt.id ? 'bg-indigo-500/10 text-indigo-300 font-medium' : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100'}`}
+                      >
+                        <span className="truncate pr-4">{opt.name}</span>
+                        {value === opt.id && <Check className="w-4 h-4 text-indigo-400 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                  {options.length === 0 && !loading && (
+                    <div className="px-4 py-8 text-sm text-zinc-500 text-center">Aucune option</div>
+                  )}
+                </motion.div>
+              </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </AnimatePresence>,
+          document.body
+        )
+      ) : (
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: position === 'bottom' ? -15 : 15, scale: 0.95, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: position === 'bottom' ? -10 : 10, scale: 0.98, filter: 'blur(5px)' }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className={`absolute ${position === 'bottom' ? 'top-full mt-3' : 'bottom-full mb-3'} ${align === 'left' ? 'left-0 origin-top-left' : align === 'right' ? 'right-0 origin-top-right' : 'left-1/2 -translate-x-1/2 origin-top'} w-[90vw] max-w-[320px] max-h-[60vh] overflow-y-auto bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800 rounded-2xl shadow-2xl z-50 py-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ring-1 ring-white/5`}
+            >
+              {label && <div className="px-5 py-3 text-[11px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-800/50 mb-1">{label}</div>}
+              <div className="flex flex-col p-1.5 gap-0.5">
+                {options.map((opt: any) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      onChange(opt.id);
+                      setIsOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-all flex items-center justify-between group ${value === opt.id ? 'bg-indigo-500/10 text-indigo-300' : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100'}`}
+                  >
+                    <span className="truncate pr-4 font-medium">{opt.name}</span>
+                    {value === opt.id && <Check className="w-4 h-4 text-indigo-400 shrink-0" />}
+                  </button>
+                ))}
+              </div>
+              {options.length === 0 && !loading && (
+                <div className="px-4 py-8 text-sm text-zinc-500 text-center">Aucune option</div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }
 
-function ChatInput({ onSend, disabled, placeholder }: { onSend: (text: string) => void, disabled: boolean, placeholder: string }) {
+function ChatInput({ onSend, disabled, placeholder, onLiveCall, showLiveCall }: { onSend: (text: string) => void, disabled: boolean, placeholder: string, onLiveCall?: () => void, showLiveCall?: boolean }) {
   const [inputValue, setInputValue] = useState('');
 
   const handleSend = () => {
@@ -99,9 +168,20 @@ function ChatInput({ onSend, disabled, placeholder }: { onSend: (text: string) =
   return (
     <div className="p-4 bg-black w-full pb-6 md:pb-8">
       <div className="max-w-3xl mx-auto flex items-end gap-3 bg-zinc-900/90 backdrop-blur-md rounded-[28px] pl-3 pr-2 py-2 border border-zinc-800 shadow-xl focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
-        <button className="p-2.5 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors shrink-0 mb-0.5">
-          <Plus className="w-5 h-5" />
-        </button>
+        {showLiveCall ? (
+          <button 
+            type="button"
+            onClick={onLiveCall}
+            className="p-2 hover:bg-zinc-800 rounded-full transition-colors shrink-0 mb-0.5 text-2xl flex items-center justify-center relative cursor-pointer"
+            title="Lancer un appel vocal Live"
+          >
+            🧑‍💻
+          </button>
+        ) : (
+          <button type="button" className="p-2.5 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors shrink-0 mb-0.5">
+            <Plus className="w-5 h-5" />
+          </button>
+        )}
         
         <div className="flex-1 flex items-center min-h-[44px]">
           <input
@@ -118,6 +198,7 @@ function ChatInput({ onSend, disabled, placeholder }: { onSend: (text: string) =
         </div>
 
         <button 
+          type="button"
           onClick={handleSend}
           disabled={!inputValue.trim() || disabled}
           className={`p-2.5 mb-0.5 rounded-full transition-all flex items-center justify-center shrink-0 ${
@@ -132,6 +213,44 @@ function ChatInput({ onSend, disabled, placeholder }: { onSend: (text: string) =
     </div>
   );
 }
+
+const formatGeminiMessages = (messages: Message[]) => {
+  const formatted: { role: string; parts: { text: string }[] }[] = [];
+  
+  // Filter out empty messages
+  let validMessages = messages.filter(m => m.content && m.content.trim() !== '');
+  
+  // Gemini requires the first message to be from the user.
+  // Skip any leading model (assistant) messages.
+  while (validMessages.length > 0 && validMessages[0].role === 'assistant') {
+    validMessages.shift();
+  }
+  
+  for (const msg of validMessages) {
+    const role = msg.role === 'assistant' ? 'model' : 'user';
+    const last = formatted[formatted.length - 1];
+    
+    if (last && last.role === role) {
+      // Merge consecutive messages of the same role
+      last.parts[0].text += '\n\n' + msg.content;
+    } else {
+      formatted.push({
+        role,
+        parts: [{ text: msg.content }]
+      });
+    }
+  }
+  
+  // Ensure the list is not empty and starts with user
+  if (formatted.length === 0) {
+    formatted.push({
+      role: 'user',
+      parts: [{ text: 'Bonjour' }]
+    });
+  }
+  
+  return formatted;
+};
 
 interface MainPanelProps {
   apiKeys: ApiKeys;
@@ -155,6 +274,65 @@ export function MainPanel({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
+  const [isLiveCallOpen, setIsLiveCallOpen] = useState(false);
+
+  const handleSaveLiveCallTranscript = async (text: string) => {
+    let session = null;
+    if (isSupabaseConfigured) {
+      const { data } = await supabase.auth.getSession();
+      session = data.session;
+    }
+    const isGuest = !session?.user;
+    const userId = session?.user?.id;
+
+    let convId = currentConversation?.id;
+    let isNewConv = false;
+    const title = "Appel Vocal Live";
+    
+    if (!convId) {
+      convId = Date.now().toString();
+      isNewConv = true;
+      if (!isGuest && userId && isSupabaseConfigured) {
+        await supabase.from('conversations').insert({
+          id: convId,
+          user_id: userId,
+          title: title,
+          updated_at: new Date().toISOString()
+        });
+      }
+    }
+
+    const msgId = Date.now().toString();
+    const newMsg: Message = { id: msgId, role: 'assistant', content: text };
+    const updatedMessages = [...messages, newMsg];
+    setMessages(updatedMessages);
+
+    if (isNewConv) {
+      onUpdateConversation({
+        id: convId!,
+        title: title,
+        messages: updatedMessages,
+        updatedAt: Date.now()
+      });
+    } else {
+      onUpdateConversation({
+        ...currentConversation!,
+        messages: updatedMessages,
+        updatedAt: Date.now()
+      });
+    }
+
+    if (!isGuest && userId && isSupabaseConfigured) {
+      await supabase.from('messages').insert({
+        id: msgId,
+        conversation_id: convId!,
+        user_id: userId,
+        role: 'assistant',
+        content: text
+      });
+      await supabase.from('conversations').update({ updated_at: new Date().toISOString() }).eq('id', convId!);
+    }
+  };
   
   const configuredProviders = AI_PROVIDERS.filter(p => !!apiKeys[p.id]);
   const [activeProviderId, setActiveProviderId] = useState<ProviderId | null>(
@@ -204,15 +382,61 @@ export function MainPanel({
       setIsFetchingModels(true);
       try {
         if (provider.id === 'gemini') {
-          const res = await nativeFetch(`${provider.baseUrl}/models?key=${apiKey}`);
-          if (res.ok) {
-            const data = await res.json();
-            const models = (data.models || []).map((m: any) => ({
-              id: m.name.replace('models/', ''),
-              name: m.displayName || m.name.replace('models/', '')
-            }));
-            setAvailableModels(models);
-            if (models.length > 0) setSelectedModel(models[0].id);
+          const ai = new GoogleGenAI({ apiKey });
+          let modelsFetched = false;
+          try {
+            const modelsList = [];
+            for await (const m of await ai.models.list()) {
+              modelsList.push(m);
+            }
+            if (modelsList.length > 0) {
+              const genModels = modelsList.filter((m: any) => {
+                const nameLower = (m.name || '').toLowerCase();
+                return (m.supportedActions && m.supportedActions.includes('generateContent')) || 
+                       m.supportedGenerationMethods?.includes('generateContent') || 
+                       nameLower.includes('gemini');
+              });
+              const models = genModels.map((m: any) => ({
+                id: (m.name || '').replace('models/', ''),
+                name: m.displayName || (m.name || '').replace('models/', '')
+              }));
+              if (models.length > 0) {
+                setAvailableModels(models);
+                modelsFetched = true;
+                
+                const defaultPref = models.find((m: any) => m.id === 'gemini-2.5-flash') ||
+                                  models.find((m: any) => m.id === 'gemini-2.0-flash') ||
+                                  models.find((m: any) => m.id === 'gemini-1.5-flash') ||
+                                  models.find((m: any) => m.id === 'gemini-2.5-pro') ||
+                                  models.find((m: any) => m.id === 'gemini-2.0-pro') ||
+                                  models.find((m: any) => m.id === 'gemini-1.5-pro') ||
+                                  models.find((m: any) => m.id.includes('gemini-2.5-flash')) ||
+                                  models.find((m: any) => m.id.includes('gemini-2.0-flash')) ||
+                                  models.find((m: any) => m.id.includes('gemini-1.5-flash')) ||
+                                  models.find((m: any) => m.id.includes('gemini-2.5')) ||
+                                  models.find((m: any) => m.id.includes('gemini-2.0')) ||
+                                  models.find((m: any) => m.id.includes('gemini-1.5')) ||
+                                  models.find((m: any) => m.id.includes('gemini')) ||
+                                  models[0];
+                setSelectedModel(defaultPref ? defaultPref.id : models[0].id);
+              }
+            }
+          } catch (listErr) {
+            console.warn("Failed to fetch Gemini models via SDK, falling back to static popular list", listErr);
+          }
+
+          if (!modelsFetched) {
+            // Safe fallback: Popular models
+            const fallbackModels = [
+              { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
+              { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
+              { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+              { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Preview)' },
+              { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+              { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' }
+            ];
+            setAvailableModels(fallbackModels);
+            setSelectedModel('gemini-2.0-flash');
           }
         } else {
           const res = await nativeFetch(`${provider.baseUrl}/models`, {
@@ -386,57 +610,21 @@ export function MainPanel({
       let finalAiContent = '';
       const modelToUse = selectedModel || activeProvider.defaultModel;
       if (activeProvider.id === 'gemini') {
-        const res = await nativeFetch(`${activeProvider.baseUrl}/models/${modelToUse}:streamGenerateContent?alt=sse&key=${apiKey}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contents: initialMessages.map(m => ({
-              role: m.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: m.content }]
-            }))
-          })
+        const ai = new GoogleGenAI({ apiKey });
+        const contents = formatGeminiMessages(initialMessages);
+        
+        const responseStream = await ai.models.generateContentStream({
+          model: modelToUse,
+          contents: contents
         });
 
-        if (!res.ok) {
-           const errText = await res.text();
-           throw new Error(`Erreur API Gemini (${res.status}): ${errText}`);
-        }
-
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder("utf-8");
-        if (!reader) throw new Error("Flux introuvable");
-
         let aiContent = '';
-        let buffer = '';
         let lastRenderTime = Date.now();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          
-          let contentUpdated = false;
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-              try {
-                const chunk = JSON.parse(trimmedLine.slice(6));
-                const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                if (text) {
-                  aiContent += text;
-                  contentUpdated = true;
-                }
-              } catch (e) {
-                console.warn("Erreur de parsing JSON sur le stream Gemini:", e, trimmedLine);
-              }
-            }
-          }
-
-          if (contentUpdated) {
+        
+        for await (const chunk of responseStream) {
+          const text = chunk.text;
+          if (text) {
+            aiContent += text;
             currentMessages = currentMessages.map(m => m.id === aiMsgId ? { ...m, content: aiContent } : m);
             const now = Date.now();
             if (now - lastRenderTime > 40) {
@@ -446,7 +634,6 @@ export function MainPanel({
           }
         }
         finalAiContent = aiContent;
-        // Ensure final state is rendered
         setMessages(currentMessages.map(m => m.id === aiMsgId ? { ...m, content: aiContent } : m));
       } else {
         const res = await nativeFetch(`${activeProvider.baseUrl}/chat/completions`, {
@@ -570,7 +757,7 @@ export function MainPanel({
             icon={activeProvider ? `/icons/${activeProvider.id}.png` : undefined}
             label="Fournisseurs"
             position="bottom"
-            align="left"
+            align="center-screen"
             maxTextWidth={maxLabelWidth}
           />
           <Dropdown
@@ -586,7 +773,7 @@ export function MainPanel({
             disabled={isFetchingModels || availableModels.length === 0}
             label="Modèles"
             position="bottom"
-            align="right"
+            align="center-screen"
             maxTextWidth={maxLabelWidth}
           />
         </>
@@ -712,7 +899,17 @@ export function MainPanel({
         onSend={handleSendMessage}
         disabled={!activeProvider || isLoading}
         placeholder={activeProvider ? `Répondre à ${activeProvider.name}` : "Configurez une clé API d'abord..."}
+        onLiveCall={() => setIsLiveCallOpen(true)}
+        showLiveCall={!!apiKeys.gemini}
       />
+
+      {isLiveCallOpen && apiKeys.gemini && (
+        <LiveVoiceCall 
+          geminiApiKey={apiKeys.gemini}
+          onClose={() => setIsLiveCallOpen(false)}
+          onSaveMessage={handleSaveLiveCallTranscript}
+        />
+      )}
     </main>
   );
 }

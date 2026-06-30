@@ -26,9 +26,9 @@ export const AI_PROVIDERS: ProviderConfig[] = [
     id: 'groq', 
     name: 'Groq', 
     baseUrl: 'https://api.groq.com/openai/v1', 
-    description: 'Inférence ultra-rapide (Llama 3, Mixtral)',
+    description: 'Inférence ultra-rapide (Llama 3.3, Llama 3.1)',
     domain: 'groq.com',
-    defaultModel: 'llama3-8b-8192'
+    defaultModel: 'llama-3.3-70b-versatile'
   },
   { 
     id: 'mistral', 
@@ -50,17 +50,17 @@ export const AI_PROVIDERS: ProviderConfig[] = [
     id: 'gemini', 
     name: 'Google Gemini', 
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta', 
-    description: 'Gemini 1.5 Pro & Flash',
+    description: 'Gemini 2.0 & 1.5 (Pro & Flash)',
     domain: 'gemini.google.com',
-    defaultModel: 'gemini-1.5-pro'
+    defaultModel: 'gemini-2.0-flash'
   },
   {
     id: 'cerebras',
     name: 'Cerebras',
     baseUrl: 'https://api.cerebras.ai/v1',
-    description: 'Inférence instantanée CS-3',
+    description: 'Inférence instantanée CS-3 (Llama 3.3)',
     domain: 'cerebras.ai',
-    defaultModel: 'llama3.1-70b'
+    defaultModel: 'llama3.3-70b'
   }
 ];
 

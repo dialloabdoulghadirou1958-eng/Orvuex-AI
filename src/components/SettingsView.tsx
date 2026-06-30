@@ -1,8 +1,9 @@
-import { ArrowLeft, Key, Trash2, CheckCircle2, LogOut } from 'lucide-react';
+import { ArrowLeft, Key, Trash2, CheckCircle2, LogOut, AlertCircle, Loader2 } from 'lucide-react';
 import { AI_PROVIDERS } from '../lib/providers';
 import { ProviderId, ApiKeys } from '../types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { GoogleGenAI } from '@google/genai';
 
 interface SettingsViewProps {
   apiKeys: ApiKeys;
@@ -14,11 +15,110 @@ interface SettingsViewProps {
 export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: SettingsViewProps) {
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>('openai');
   const [inputValue, setInputValue] = useState('');
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle');
+  const [validationMessage, setValidationMessage] = useState<string>('');
+
+  const currentProviderInfo = AI_PROVIDERS.find(p => p.id === selectedProvider);
+  const hasKey = !!apiKeys[selectedProvider];
+
+  useEffect(() => {
+    setValidationStatus('idle');
+    setValidationMessage('');
+  }, [selectedProvider, hasKey]);
+
+  const runImmediateValidation = async (key: string) => {
+    if (!key) return;
+    setValidationStatus('validating');
+    setValidationMessage('');
+    
+    try {
+      const trimmedKey = key.trim();
+      if (selectedProvider === 'gemini') {
+        const ai = new GoogleGenAI({ apiKey: trimmedKey });
+        
+        try {
+          // Primary validation method: Test content generation with gemini-2.0-flash
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: 'Hello'
+          });
+          if (response && response.text) {
+            setValidationStatus('success');
+            setValidationMessage(`Google AI Studio a validé la clé d'API avec succès via le SDK officiel @google/genai (Test de génération OK avec gemini-2.0-flash).`);
+            return;
+          }
+        } catch (err20) {
+          console.warn("Validation with gemini-2.0-flash failed, trying gemini-1.5-flash...", err20);
+        }
+
+        try {
+          // Secondary validation method: Test content generation with gemini-1.5-flash
+          const response = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: 'Hello'
+          });
+          if (response && response.text) {
+            setValidationStatus('success');
+            setValidationMessage(`Google AI Studio a validé la clé d'API avec succès via le SDK officiel @google/genai (Test de génération OK avec gemini-1.5-flash).`);
+            return;
+          }
+        } catch (err15) {
+          console.warn("Validation with gemini-1.5-flash failed, trying models.list...", err15);
+        }
+
+        // Final fallback method: Try to list models
+        try {
+          const pager = await ai.models.list();
+          const models = pager.page;
+          if (models && models.length > 0) {
+            setValidationStatus('success');
+            setValidationMessage(`Google AI Studio a validé la clé d'API avec succès via le SDK officiel @google/genai (${models.length} modèles détectés via list).`);
+          } else {
+            setValidationStatus('error');
+            setValidationMessage('La clé d\'API a été acceptée par Google, mais aucun modèle n\'a pu être répertorié.');
+          }
+        } catch (listErr: any) {
+          // All methods failed, throw the initial error
+          throw new Error(`Échec de validation de la clé. Assurez-vous qu'elle est valide et active. Détails de l'erreur : ${listErr.message || listErr}`);
+        }
+      } else {
+        const provider = AI_PROVIDERS.find(p => p.id === selectedProvider);
+        if (!provider) return;
+        
+        const res = await fetch(`${provider.baseUrl}/models`, {
+          headers: { 'Authorization': `Bearer ${trimmedKey}` }
+        });
+        
+        if (res.ok) {
+          setValidationStatus('success');
+          setValidationMessage('Connexion réussie avec le fournisseur.');
+        } else {
+          const errText = await res.text();
+          setValidationStatus('error');
+          setValidationMessage(`Erreur de connexion (${res.status}): ${errText.slice(0, 100)}`);
+        }
+      }
+    } catch (err: any) {
+      setValidationStatus('error');
+      setValidationMessage(`Erreur réseau: ${err.message || err}`);
+    }
+  };
 
   const handleSave = () => {
     if (inputValue.trim()) {
-      setApiKey(selectedProvider, inputValue.trim());
+      const key = inputValue.trim();
+      setApiKey(selectedProvider, key);
       setInputValue('');
+      setTimeout(() => {
+        runImmediateValidation(key);
+      }, 100);
+    }
+  };
+
+  const handleTestExisting = () => {
+    const key = apiKeys[selectedProvider];
+    if (key) {
+      runImmediateValidation(key);
     }
   };
 
@@ -27,9 +127,6 @@ export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: Sett
       await supabase.auth.signOut();
     }
   };
-
-  const currentProviderInfo = AI_PROVIDERS.find(p => p.id === selectedProvider);
-  const hasKey = !!apiKeys[selectedProvider];
 
   return (
     <div className="flex-1 flex flex-col h-full bg-zinc-950 w-full overflow-y-auto">
@@ -112,14 +209,60 @@ export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: Sett
               </div>
               
               {hasKey ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 text-emerald-400 bg-emerald-400/10 p-3 rounded-lg border border-emerald-400/20">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <div>
-                      <p className="font-medium text-sm">Clé configurée et active</p>
-                      <p className="text-xs opacity-80 mt-0.5">Prête à être utilisée pour les requêtes.</p>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                    <div className="space-y-1 flex-1">
+                      <p className="font-semibold text-zinc-100 text-sm">Clé configurée et active</p>
+                      <p className="text-xs text-zinc-400 leading-normal">Votre clé d'API pour {currentProviderInfo?.name} est enregistrée localement et active.</p>
                     </div>
                   </div>
+
+                  {/* Validation status widget */}
+                  <div className="bg-zinc-950/50 p-4 rounded-xl border border-zinc-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {validationStatus === 'idle' && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-zinc-600 animate-pulse" />
+                        )}
+                        {validationStatus === 'validating' && (
+                          <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                        )}
+                        {validationStatus === 'success' && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        )}
+                        {validationStatus === 'error' && (
+                          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                        )}
+                        <span className="text-sm font-medium text-zinc-300">
+                          {validationStatus === 'idle' && 'Statut: Non testé'}
+                          {validationStatus === 'validating' && 'Validation de la clé...'}
+                          {validationStatus === 'success' && 'Connexion réussie !'}
+                          {validationStatus === 'error' && 'Échec de connexion'}
+                        </span>
+                      </div>
+
+                      {validationStatus !== 'validating' && (
+                        <button
+                          onClick={handleTestExisting}
+                          className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20"
+                        >
+                          Tester la clé
+                        </button>
+                      )}
+                    </div>
+
+                    {validationMessage && (
+                      <div className={`text-xs p-3 rounded-lg border font-mono ${
+                        validationStatus === 'success' 
+                          ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400' 
+                          : 'bg-red-500/5 border-red-500/10 text-red-400 break-words'
+                      }`}>
+                        {validationMessage}
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     onClick={() => removeApiKey(selectedProvider)}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
@@ -129,7 +272,7 @@ export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: Sett
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="space-y-1.5">
                     <label htmlFor="api-key-input" className="text-xs font-medium text-zinc-400 block">
                       Clé d'API
@@ -149,10 +292,42 @@ export function SettingsView({ apiKeys, setApiKey, removeApiKey, onClose }: Sett
                   <button
                     onClick={handleSave}
                     disabled={!inputValue.trim()}
-                    className="bg-zinc-100 text-zinc-900 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed font-medium px-4 py-2 rounded-lg text-sm transition-colors"
+                    className="bg-zinc-100 text-zinc-900 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors w-full flex items-center justify-center gap-2"
                   >
-                    Enregistrer la clé
+                    Enregistrer et Valider la clé
                   </button>
+
+                  {/* Validation status widget for newly entered key */}
+                  {validationStatus !== 'idle' && (
+                    <div className="bg-zinc-950/50 p-4 rounded-xl border border-zinc-800 space-y-3">
+                      <div className="flex items-center gap-2">
+                        {validationStatus === 'validating' && (
+                          <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                        )}
+                        {validationStatus === 'success' && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        )}
+                        {validationStatus === 'error' && (
+                          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                        )}
+                        <span className="text-sm font-medium text-zinc-300">
+                          {validationStatus === 'validating' && 'Validation en cours...'}
+                          {validationStatus === 'success' && 'Clé validée avec succès !'}
+                          {validationStatus === 'error' && 'La clé d\'API semble invalide'}
+                        </span>
+                      </div>
+
+                      {validationMessage && (
+                        <div className={`text-xs p-3 rounded-lg border font-mono ${
+                          validationStatus === 'success' 
+                            ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400' 
+                            : 'bg-red-500/5 border-red-500/10 text-red-400 break-words'
+                        }`}>
+                          {validationMessage}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
