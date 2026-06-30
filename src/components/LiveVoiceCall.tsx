@@ -153,8 +153,8 @@ export function LiveVoiceCall({ geminiApiKey, onClose, onSaveMessage }: LiveVoic
         const pcmPlayer = new PCMPlayer(24000, outputAudioCtx);
         pcmPlayerRef.current = pcmPlayer;
 
-        // Establish connection to Multimodal Live API
-        const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${geminiApiKey}`;
+        // Establish connection to Multimodal Live API via our proxy
+        const wsUrl = `wss://${window.location.host}/api/gemini-live?key=${encodeURIComponent(geminiApiKey)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -164,7 +164,7 @@ export function LiveVoiceCall({ geminiApiKey, onClose, onSaveMessage }: LiveVoic
           // 1. Send setup parameters to initiate the multimodal session with specified voice configuration
           const setupMsg = {
             setup: {
-              model: "models/gemini-2.0-flash-exp",
+              model: "models/gemini-3.5-live-translate-preview",
               generationConfig: {
                 responseModalities: ["AUDIO"],
                 speechConfig: {
