@@ -29,10 +29,13 @@
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "scope_extensions": [
     {
-      "origin": "https://*.vercel.app"
+      "origin": "https://orvuex-ai.vercel.app"
     },
     {
-      "origin": "https://orvuex-ai.vercel.app"
+      "origin": "https://ais-dev-e4e7qexcss4oe4ts3q2r75-405902477635.europe-west2.run.app"
+    },
+    {
+      "origin": "https://ais-pre-e4e7qexcss4oe4ts3q2r75-405902477635.europe-west2.run.app"
     }
   ],
   "start_url": "/",
