@@ -603,7 +603,7 @@ export function MainPanel({
   );
 
   return (
-    <main className={`flex-1 flex flex-col h-full bg-black relative text-zinc-100 min-w-0 w-full transition-all duration-300 origin-right ${isSidebarOpen ? 'opacity-40 scale-[0.97] md:opacity-100 md:scale-100 filter brightness-[0.7] md:filter-none' : ''}`}>
+    <main className={`flex-1 flex flex-col h-full bg-black relative text-zinc-100 min-w-0 w-full transition-all duration-300 ease-in-out origin-center overflow-hidden ${isSidebarOpen ? 'translate-x-[270px] scale-[0.93] rounded-2xl brightness-[0.45] saturate-[0.7] contrast-[0.95] shadow-[0_0_50px_rgba(0,0,0,0.85)] ring-1 ring-zinc-800/80 pointer-events-none md:translate-x-0 md:scale-100 md:rounded-none md:brightness-100 md:saturate-100 md:contrast-100 md:shadow-none md:ring-0 md:pointer-events-auto' : ''}`}>
       {/* Header */}
       <header ref={headerRef} className="h-14 flex items-center justify-between px-2 sm:px-4 sticky top-0 bg-black/80 backdrop-blur-md z-10 border-b border-zinc-900/50">
         <button 

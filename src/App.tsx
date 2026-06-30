@@ -14,7 +14,9 @@ import { Session } from '@supabase/supabase-js';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [isGuest, setIsGuest] = useState(false);
+  const [isGuest, setIsGuest] = useState(() => {
+    return localStorage.getItem('orvuex_is_guest') === 'true';
+  });
   const [apiKeys, setApiKeys] = useState<ApiKeys>({});
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -90,14 +92,20 @@ export default function App() {
     if (isSupabaseConfigured) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
-        if (session) setIsGuest(false);
+        if (session) {
+          setIsGuest(false);
+          localStorage.removeItem('orvuex_is_guest');
+        }
       });
 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         setSession(session);
-        if (session) setIsGuest(false);
+        if (session) {
+          setIsGuest(false);
+          localStorage.removeItem('orvuex_is_guest');
+        }
       });
 
       return () => subscription.unsubscribe();
@@ -106,7 +114,30 @@ export default function App() {
 
   useEffect(() => {
     if (session && isSupabaseConfigured) {
-      fetchInitialData();
+      // Load user-specific cached data from localStorage immediately for fast, robust restore
+      const userConvsKey = `orvuex_convs_${session.user.id}`;
+      const userKeysKey = `orvuex_keys_${session.user.id}`;
+      
+      const cachedKeys = localStorage.getItem(userKeysKey);
+      if (cachedKeys) {
+        try {
+          setApiKeys(JSON.parse(cachedKeys));
+        } catch (e) {}
+      }
+      
+      const cachedConvs = localStorage.getItem(userConvsKey);
+      if (cachedConvs) {
+        try {
+          const parsed = JSON.parse(cachedConvs);
+          setConversations(parsed);
+          if (parsed.length > 0 && !currentConversationId) {
+            setCurrentConversationId(parsed[0].id);
+          }
+        } catch (e) {}
+      }
+      
+      // Background fetch to sync with Supabase cloud database
+      fetchInitialData(session.user.id);
     } else {
       // Load from localStorage for guests
       const localKeys = localStorage.getItem('orvuex_guest_keys');
@@ -131,41 +162,62 @@ export default function App() {
     }
   }, [session]);
 
-  const fetchInitialData = async () => {
-    setLoadingInitial(true);
+  const fetchInitialData = async (userId?: string) => {
+    // If we already loaded cached local conversations, don't show full-screen loader
+    setLoadingInitial(prev => prev && conversations.length === 0);
     try {
       // Fetch API Keys
-      const { data: keysData } = await supabase
+      const { data: keysData, error: keysError } = await supabase
         .from('user_api_keys')
         .select('provider_id, api_key');
       
-      if (keysData) {
+      if (keysData && !keysError) {
         const keysMap: ApiKeys = {};
         keysData.forEach((k: any) => {
           keysMap[k.provider_id as ProviderId] = k.api_key;
         });
         setApiKeys(keysMap);
+        if (userId) {
+          localStorage.setItem(`orvuex_keys_${userId}`, JSON.stringify(keysMap));
+        }
       }
 
-      // Fetch Conversations
-      const { data: convData } = await supabase
+      // Fetch Conversations (without .order to avoid db crashes when column sorting fails)
+      const { data: convData, error: convError } = await supabase
         .from('conversations')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
 
-      if (convData) {
-        // Map to our Conversation type, but without messages yet
-        const mappedConv = convData.map((c: any) => ({
-          id: c.id,
-          title: c.title,
-          messages: [],
-          updatedAt: new Date(c.updated_at).getTime()
-        }));
-        setConversations(mappedConv);
+      if (convError) {
+        console.error('Error fetching conversations from Supabase:', convError);
+      }
 
-        if (mappedConv.length > 0 && !currentConversationId) {
-          setCurrentConversationId(mappedConv[0].id);
-        }
+      if (convData && !convError) {
+        setConversations(prev => {
+          // Map backend conversations, keeping any messages we loaded locally in this session
+          const mappedConv = convData.map((c: any) => {
+            const existing = prev.find(ec => ec.id === c.id);
+            return {
+              id: c.id,
+              title: c.title,
+              messages: existing ? existing.messages : [],
+              updatedAt: c.updated_at ? new Date(c.updated_at).getTime() : Date.now()
+            };
+          });
+          
+          // Sort descending by updatedAt (most recent first)
+          mappedConv.sort((a, b) => b.updatedAt - a.updatedAt);
+          
+          if (userId) {
+            localStorage.setItem(`orvuex_convs_${userId}`, JSON.stringify(mappedConv));
+          }
+          
+          // Auto-select first conversation if none selected
+          if (mappedConv.length > 0 && !currentConversationId) {
+            setCurrentConversationId(mappedConv[0].id);
+          }
+          
+          return mappedConv;
+        });
       }
     } catch (error) {
       console.error('Error fetching initial data', error);
@@ -179,6 +231,7 @@ export default function App() {
     setApiKeys(newKeys);
 
     if (session?.user && isSupabaseConfigured) {
+      localStorage.setItem(`orvuex_keys_${session.user.id}`, JSON.stringify(newKeys));
       const { error } = await supabase
         .from('user_api_keys')
         .upsert(
@@ -200,6 +253,8 @@ export default function App() {
       delete newKeys[providerId];
       if (!session?.user) {
         localStorage.setItem('orvuex_guest_keys', JSON.stringify(newKeys));
+      } else {
+        localStorage.setItem(`orvuex_keys_${session.user.id}`, JSON.stringify(newKeys));
       }
       return newKeys;
     });
@@ -229,6 +284,8 @@ export default function App() {
       const filtered = prev.filter(c => c.id !== id);
       if (!session?.user) {
         localStorage.setItem('orvuex_guest_convs', JSON.stringify(filtered));
+      } else {
+        localStorage.setItem(`orvuex_convs_${session.user.id}`, JSON.stringify(filtered));
       }
       return filtered;
     });
@@ -246,10 +303,13 @@ export default function App() {
     setCurrentConversationId(null);
     if (!session?.user) {
       localStorage.removeItem('orvuex_guest_convs');
-    } else if (isSupabaseConfigured) {
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        await supabase.from('conversations').delete().eq('user_id', userData.user.id);
+    } else {
+      localStorage.setItem(`orvuex_convs_${session.user.id}`, JSON.stringify([]));
+      if (isSupabaseConfigured) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          await supabase.from('conversations').delete().eq('user_id', userData.user.id);
+        }
       }
     }
   };
@@ -265,6 +325,8 @@ export default function App() {
       }
       if (!session?.user) {
         localStorage.setItem('orvuex_guest_convs', JSON.stringify(newConvs));
+      } else {
+        localStorage.setItem(`orvuex_convs_${session.user.id}`, JSON.stringify(newConvs));
       }
       return newConvs;
     });
@@ -278,7 +340,14 @@ export default function App() {
   }
 
   if (!session && !isGuest) {
-    return <AuthScreen onContinueAsGuest={() => setIsGuest(true)} />;
+    return (
+      <AuthScreen 
+        onContinueAsGuest={() => {
+          setIsGuest(true);
+          localStorage.setItem('orvuex_is_guest', 'true');
+        }} 
+      />
+    );
   }
 
   return (
@@ -303,7 +372,10 @@ export default function App() {
             userEmail={session?.user?.email}
             userName={session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name}
             userAvatar={session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture}
-            onSignUpClick={() => setIsGuest(false)}
+            onSignUpClick={() => {
+              setIsGuest(false);
+              localStorage.removeItem('orvuex_is_guest');
+            }}
           />
           <MainPanel 
             apiKeys={apiKeys} 
