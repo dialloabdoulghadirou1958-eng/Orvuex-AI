@@ -276,16 +276,9 @@ export function MainPanel({
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
   const [isLiveCallOpen, setIsLiveCallOpen] = useState(false);
 
-  const scrollToBottom = (smooth = true) => {
+  const scrollToBottom = () => {
     if (scrollContainerRef.current) {
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTo({
-            top: scrollContainerRef.current.scrollHeight,
-            behavior: smooth ? 'smooth' : 'auto'
-          });
-        }
-      });
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   };
 
@@ -646,7 +639,7 @@ export function MainPanel({
                 const container = scrollContainerRef.current;
                 const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
                 if (isNearBottom) {
-                  scrollToBottom(false);
+                  scrollToBottom();
                 }
               }
               lastRenderTime = now;
@@ -715,7 +708,7 @@ export function MainPanel({
                 const container = scrollContainerRef.current;
                 const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
                 if (isNearBottom) {
-                  scrollToBottom(false);
+                  scrollToBottom();
                 }
               }
               lastRenderTime = now;

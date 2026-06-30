@@ -110,12 +110,12 @@ export function TypewriterMessage({ content, isLast, isStreaming }: MessageConte
 
     const interval = setInterval(() => {
       if (bufferRef.current.length > 0) {
-        // Take a larger chunk from the buffer for less frequent, smoother updates
-        const chunk = bufferRef.current.slice(0, 20); 
-        bufferRef.current = bufferRef.current.slice(20);
+        // Take a chunk from the buffer
+        const chunk = bufferRef.current.slice(0, 5); // Take 5 chars at a time
+        bufferRef.current = bufferRef.current.slice(5);
         setDisplayedContent(prev => prev + chunk);
       }
-    }, 100); // 10fps ~ 100ms pour maximiser la fluidité et réduire la charge UI
+    }, 20); // 50fps ~ 20ms
 
     return () => clearInterval(interval);
   }, [isStreaming, content]);
@@ -124,7 +124,7 @@ export function TypewriterMessage({ content, isLast, isStreaming }: MessageConte
   const display = isStreaming ? `${displayedContent}▍` : displayedContent;
 
   return (
-    <div className="text-[15px] leading-relaxed break-words w-full min-w-0">
+    <div className="text-[15px] leading-relaxed space-y-4 break-words w-full min-w-0">
       <Markdown
         remarkPlugins={[remarkGfm]}
         components={MarkdownComponents as any}
