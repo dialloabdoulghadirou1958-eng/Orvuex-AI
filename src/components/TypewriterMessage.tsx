@@ -1,15 +1,10 @@
+import { useState, useEffect, useRef } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-interface MessageContentProps {
-  content: string;
-  isLast?: boolean;
-  isStreaming?: boolean;
-}
+import { MessageContentProps } from '../types';
 
 const MarkdownComponents = {
   p: ({ children }: any) => <p className="mb-4 last:mb-0 text-zinc-100">{children}</p>,
@@ -48,42 +43,6 @@ const MarkdownComponents = {
     return <CodeBlock language={language} code={codeString} />;
   }
 };
-
-export function MessageContent({ content, isLast, isStreaming }: MessageContentProps) {
-  // Le parseur doit être capable de gérer les blocs "incomplets" pendant le streaming
-  const preprocessMarkdown = (text: string) => {
-    // Optimisation: compter les backticks sans regex globale
-    const codeBlockCount = (text.split('```').length - 1);
-    let processed = text;
-    if (codeBlockCount % 2 !== 0) {
-      processed += '\n```';
-    }
-    
-    // Add cursor effect for the last message if streaming
-    if (isLast && isStreaming) {
-      if (codeBlockCount % 2 !== 0) {
-        processed = processed.replace(/\n```$/, ' ▍\n```');
-      } else {
-        processed += ' ▍';
-      }
-    }
-    
-    return processed;
-  };
-
-  const processedContent = preprocessMarkdown(content);
-
-  return (
-    <div className="text-[15px] leading-relaxed space-y-4 break-words w-full min-w-0">
-      <Markdown
-        remarkPlugins={[remarkGfm]}
-        components={MarkdownComponents as any}
-      >
-        {processedContent}
-      </Markdown>
-    </div>
-  );
-}
 
 function CodeBlock({ language, code }: { language: string, code: string }) {
   const [copied, setCopied] = useState(false);
@@ -125,6 +84,53 @@ function CodeBlock({ language, code }: { language: string, code: string }) {
           {code}
         </SyntaxHighlighter>
       </div>
+    </div>
+  );
+}
+
+export function TypewriterMessage({ content, isLast, isStreaming }: MessageContentProps) {
+  const [displayedContent, setDisplayedContent] = useState('');
+  const bufferRef = useRef('');
+  const lastProcessedContentRef = useRef('');
+
+  useEffect(() => {
+    // Detect new content added to total content
+    if (content.length > lastProcessedContentRef.current.length) {
+      const newContent = content.slice(lastProcessedContentRef.current.length);
+      bufferRef.current += newContent;
+      lastProcessedContentRef.current = content;
+    }
+  }, [content]);
+
+  useEffect(() => {
+    if (!isStreaming) {
+      setDisplayedContent(content);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (bufferRef.current.length > 0) {
+        // Take a chunk from the buffer
+        const chunk = bufferRef.current.slice(0, 5); // Take 5 chars at a time
+        bufferRef.current = bufferRef.current.slice(5);
+        setDisplayedContent(prev => prev + chunk);
+      }
+    }, 20); // 50fps ~ 20ms
+
+    return () => clearInterval(interval);
+  }, [isStreaming, content]);
+
+  // Handle the cursor
+  const display = isStreaming ? `${displayedContent}▍` : displayedContent;
+
+  return (
+    <div className="text-[15px] leading-relaxed space-y-4 break-words w-full min-w-0">
+      <Markdown
+        remarkPlugins={[remarkGfm]}
+        components={MarkdownComponents as any}
+      >
+        {display}
+      </Markdown>
     </div>
   );
 }

@@ -21,6 +21,12 @@ export interface Message {
   content: string;
 }
 
+export interface MessageContentProps {
+  content: string;
+  isLast?: boolean;
+  isStreaming?: boolean;
+}
+
 export interface Conversation {
   id: string;
   title: string;

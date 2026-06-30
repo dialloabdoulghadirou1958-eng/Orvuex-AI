@@ -164,7 +164,7 @@ export function LiveVoiceCall({ geminiApiKey, onClose, onSaveMessage }: LiveVoic
           // 1. Send setup parameters to initiate the multimodal session with specified voice configuration
           const setupMsg = {
             setup: {
-              model: "models/gemini-3.1-flash-live-preview",
+              model: "models/gemini-2.0-flash-exp",
               generationConfig: {
                 responseModalities: ["AUDIO"],
                 speechConfig: {
@@ -184,6 +184,7 @@ export function LiveVoiceCall({ geminiApiKey, onClose, onSaveMessage }: LiveVoic
           if (!active) return;
           try {
             const data = JSON.parse(event.data);
+            console.log("WebSocket message received:", data); // Add this log
             
             if (data.setupComplete) {
               setStatus('ready');

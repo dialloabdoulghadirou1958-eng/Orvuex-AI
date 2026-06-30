@@ -4,7 +4,7 @@ import { Menu, Settings, SquarePen, Plus, ArrowUp, Copy, ThumbsUp, ThumbsDown, S
 import { motion, AnimatePresence } from 'framer-motion';
 import { ApiKeys, ProviderId, Message, Conversation } from '../types';
 import { AI_PROVIDERS } from '../lib/providers';
-import { MessageContent } from './MessageContent';
+import { TypewriterMessage } from './TypewriterMessage';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { nativeFetch } from '../lib/nativeFetch';
 import { LiveVoiceCall } from './LiveVoiceCall';
@@ -276,6 +276,19 @@ export function MainPanel({
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
   const [isLiveCallOpen, setIsLiveCallOpen] = useState(false);
 
+  const scrollToBottom = (smooth = true) => {
+    if (scrollContainerRef.current) {
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: smooth ? 'smooth' : 'auto'
+          });
+        }
+      });
+    }
+  };
+
   const handleSaveLiveCallTranscript = async (text: string) => {
     let session = null;
     if (isSupabaseConfigured) {
@@ -344,6 +357,7 @@ export function MainPanel({
   const [isFetchingModels, setIsFetchingModels] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const [maxLabelWidth, setMaxLabelWidth] = useState(80);
 
@@ -512,7 +526,6 @@ export function MainPanel({
   }, [apiKeys, activeProviderId, configuredProviders]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const activeProvider = AI_PROVIDERS.find(p => p.id === activeProviderId);
@@ -627,8 +640,15 @@ export function MainPanel({
             aiContent += text;
             currentMessages = currentMessages.map(m => m.id === aiMsgId ? { ...m, content: aiContent } : m);
             const now = Date.now();
-            if (now - lastRenderTime > 40) {
+            if (now - lastRenderTime > 50) {
               setMessages(currentMessages);
+              if (scrollContainerRef.current) {
+                const container = scrollContainerRef.current;
+                const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                if (isNearBottom) {
+                  scrollToBottom(false);
+                }
+              }
               lastRenderTime = now;
             }
           }
@@ -689,8 +709,15 @@ export function MainPanel({
           if (contentUpdated) {
             currentMessages = currentMessages.map(m => m.id === aiMsgId ? { ...m, content: aiContent } : m);
             const now = Date.now();
-            if (now - lastRenderTime > 40) {
+            if (now - lastRenderTime > 50) {
               setMessages(currentMessages);
+              if (scrollContainerRef.current) {
+                const container = scrollContainerRef.current;
+                const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                if (isNearBottom) {
+                  scrollToBottom(false);
+                }
+              }
               lastRenderTime = now;
             }
           }
@@ -823,7 +850,7 @@ export function MainPanel({
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="max-w-3xl mx-auto space-y-8 pb-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[340px] h-[calc(100dvh-220px)] sm:h-[60dvh] text-center space-y-6 py-4 shrink-0">
@@ -853,7 +880,7 @@ export function MainPanel({
                     ) : (
                       <div className="text-zinc-100 w-full max-w-full md:max-w-3xl space-y-2 min-w-0">
                         {msg.content ? (
-                          <MessageContent content={msg.content} isLast={index === messages.length - 1} isStreaming={isLoading} />
+                          <TypewriterMessage content={msg.content} isLast={index === messages.length - 1} isStreaming={isLoading} />
                         ) : (
                           <div className="flex items-center gap-1 text-zinc-400 h-6">
                             <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }} className="w-1.5 h-1.5 rounded-full bg-current" />
