@@ -32,6 +32,10 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Installer Android SDK 31 pour les plugins
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-31" "build-tools;31.0.0" || true
+
       - name: Générer les fichiers natifs manquants
         run: |
           cd orvuex_flutter
