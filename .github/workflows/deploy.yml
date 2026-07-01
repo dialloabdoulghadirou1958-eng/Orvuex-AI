@@ -29,6 +29,12 @@ jobs:
           cd orvuex_flutter
           flutter pub get
 
+      # 3.5 Activer le support Web
+      - name: Activer le support Web
+        run: |
+          cd orvuex_flutter
+          flutter create . --platforms web
+
       # 4. Compilation Flutter Web en mode ultra-rapide
       # Le --base-href "/" permet d'avoir des liens propres sur Vercel
       - name: Compilation Flutter Web
