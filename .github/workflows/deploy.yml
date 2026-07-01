@@ -1,4 +1,4 @@
-name: Deploy Orvuex AI to GitHub Pages
+name: Deploy Orvuex AI to Vercel (Fast Mode)
 
 on:
   push:
@@ -7,65 +7,41 @@ on:
       - main
   workflow_dispatch:
 
-# Autorisations officielles requises pour publier sur GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Évite les conflits si tu fais plusieurs push d'affilée
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest # Utilise la machine virtuelle ultra-rapide de GitHub
+    runs-on: ubuntu-latest # Ta machine de guerre (4 vCPUs / 16 Go de RAM)
 
     steps:
-      # 1. Récupération de ton code source
+      # 1. Récupération de ton code
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      # 2. Configuration du SDK Flutter avec mise en cache activée
+      # 2. Configuration de Flutter avec le système de Cache activé
       - name: Configuration de Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true # Saute le téléchargement aux prochains lancements pour aller à fond
+          cache: true
 
-      # 3. Installation des dépendances (Supabase, Gemini...) dans le cloud
+      # 3. Installation des packages de ton projet
       - name: Installer les dépendances
         run: |
           cd orvuex_flutter
           flutter pub get
 
-      # 3.5 Activer le support Web (génère les fichiers indispensables si absents)
-      - name: Activer le support Web
-        run: |
-          cd orvuex_flutter
-          flutter create . --platforms web
-
-      # 4. Compilation officielle pour le Web (Optimisée et dynamique)
+      # 4. Compilation Flutter Web en mode ultra-rapide
+      # Le --base-href "/" permet d'avoir des liens propres sur Vercel
       - name: Compilation Flutter Web
         run: |
           cd orvuex_flutter
-          flutter build web --base-href "/${{ github.event.repository.name }}/" --release
+          flutter build web --base-href "/" --release
 
-      # 5. Configuration de l'environnement GitHub Pages
-      - name: Configuration de Pages
-        uses: actions/configure-pages@v5
-
-      # 6. Téléversement du site internet compilé
-      - name: Téléverser l'artéfact Web
-        uses: actions/upload-pages-artifact@v3
+      # 5. Parachutage direct du résultat (build/web) chez Vercel
+      - name: Déploiement Direct sur Vercel
+        uses: amondnet/vercel-deploy@v6
         with:
-          path: 'orvuex_flutter/build/web'
-
-      # 7. Déploiement final et génération de ton lien de test
-      - name: Déployer sur GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod' # On envoie directement sur le lien de production public
+          working-directory: ./orvuex_flutter/build/web # On envoie UNIQUEMENT les fichiers web finaux

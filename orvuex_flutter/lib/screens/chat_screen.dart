@@ -16,10 +16,46 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
+
+  bool _isDrawerOpen = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)
+    );
+    _slideAnimation = Tween<Offset>(begin: Offset.zero, end: const Offset(0.75, 0.0)).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _toggleDrawer() {
+    setState(() {
+      _isDrawerOpen = !_isDrawerOpen;
+      if (_isDrawerOpen) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
 
   void _sendMessage() async {
     final text = _controller.text.trim();
@@ -349,7 +385,7 @@ class _ChatScreenState extends State<ChatScreen> {
               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 14),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white60, size: 16),
           ],
         ),
       ),
@@ -384,7 +420,7 @@ class _ChatScreenState extends State<ChatScreen> {
               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 14),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white60, size: 16),
           ],
         ),
       ),
@@ -396,28 +432,53 @@ class _ChatScreenState extends State<ChatScreen> {
     final settings = Provider.of<SettingsProvider>(context);
     
     return Scaffold(
+      backgroundColor: const Color(0xFF0F0F0F),
+      body: Stack(
+        children: [
+          HistoryDrawer(onClose: _toggleDrawer),
+          SlideTransition(
+            position: _slideAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              alignment: Alignment.centerLeft,
+              child: GestureDetector(
+                onTap: _isDrawerOpen ? _toggleDrawer : null,
+                child: AbsorbPointer(
+                  absorbing: _isDrawerOpen,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(_isDrawerOpen ? 32.0 : 0.0),
+                    child: _buildMainScaffold(settings),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainScaffold(SettingsProvider settings) {
+    return Scaffold(
       backgroundColor: Colors.black,
-      drawer: const HistoryDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white70),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded, color: Colors.white70),
+          onPressed: _toggleDrawer,
         ),
         actions: [
           Consumer<ChatProvider>(
             builder: (context, chatProvider, _) => IconButton(
-              icon: const Icon(Icons.edit_square, color: Colors.white70),
+              icon: const Icon(Icons.edit_outlined, color: Colors.white70),
               onPressed: () {
                 chatProvider.createNewSession();
               },
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white70),
+            icon: const Icon(Icons.settings_outlined, color: Colors.white70),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
@@ -443,25 +504,13 @@ class _ChatScreenState extends State<ChatScreen> {
                             children: [
                               // Swirl Logo with Glowing Back-shadows
                               Container(
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.purpleAccent.withOpacity(0.15),
-                                      blurRadius: 50,
-                                      spreadRadius: 15,
-                                    ),
-                                    BoxShadow(
-                                      color: Colors.cyanAccent.withOpacity(0.1),
-                                      blurRadius: 40,
-                                      spreadRadius: 5,
-                                    ),
-                                  ],
                                 ),
                                 child: Image.asset(
                                   'assets/images/orvuex_logo.png',
-                                  width: 150,
-                                  height: 150,
+                                  width: 110,
+                                  height: 110,
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) {
                                     // Fallback SVG-like or simple circular custom representation
@@ -487,12 +536,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                 'orvuex ai',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: -0.5,
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 20),
                               // Chips Row
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -578,7 +627,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1C1C1E),
                       borderRadius: BorderRadius.circular(32),
@@ -622,7 +671,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               color: Color(0xFF2C2C2E),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.arrow_upward, color: Colors.white54, size: 18),
+                            child: const Icon(Icons.arrow_upward_rounded, color: Colors.white54, size: 18),
                           ),
                         ),
                       ],

@@ -3,18 +3,16 @@ import 'package:provider/provider.dart';
 import '../services/chat_provider.dart';
 
 class HistoryDrawer extends StatelessWidget {
-  const HistoryDrawer({super.key});
+  final VoidCallback? onClose;
+  
+  const HistoryDrawer({super.key, this.onClose});
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: const Color(0xFF0F0F0F),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.75,
+      height: double.infinity,
+      color: const Color(0xFF0F0F0F),
       child: SafeArea(
         child: Consumer<ChatProvider>(
           builder: (context, chatProvider, child) {
@@ -34,7 +32,7 @@ class HistoryDrawer extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
-                        const Icon(Icons.search, color: Colors.white54, size: 20),
+                        const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
@@ -83,7 +81,7 @@ class HistoryDrawer extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.white38, size: 18),
+                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.white38, size: 18),
                                 onPressed: () {
                                   chatProvider.deleteSession(session.id);
                                 },
@@ -91,7 +89,7 @@ class HistoryDrawer extends StatelessWidget {
                               tileColor: isActive ? const Color(0xFF1C1C1E) : Colors.transparent,
                               onTap: () {
                                 chatProvider.setActiveSession(session.id);
-                                Navigator.pop(context);
+                                if (onClose != null) onClose!();
                               },
                             );
                           },
@@ -108,7 +106,7 @@ class HistoryDrawer extends StatelessWidget {
                         height: 40,
                         clipBehavior: Clip.hardEdge,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(10),
                           color: const Color(0xFF1C1C1E),
                         ),
                         child: Image.asset(

@@ -14,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
             iconPath, 
             width: 24, 
             height: 24,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.smart_toy, size: 24, color: Colors.blueAccent),
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.smart_toy_outlined, size: 24, color: Colors.blueAccent),
           ),
           const SizedBox(width: 12),
           Text(label),
@@ -48,6 +48,22 @@ class SettingsScreen extends StatelessWidget {
               ],
               onChanged: (val) {
                 if (val != null) settings.setProvider(val);
+              },
+            ),
+            const SizedBox(height: 20),
+            const Text('Modèle actif', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            DropdownButton<String>(
+              value: settings.selectedModel,
+              isExpanded: true,
+              items: SettingsProvider.modelsFor(settings.selectedProvider).map((model) {
+                return DropdownMenuItem<String>(
+                  value: model,
+                  child: Text(model),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) settings.setModel(val);
               },
             ),
             const SizedBox(height: 24),
