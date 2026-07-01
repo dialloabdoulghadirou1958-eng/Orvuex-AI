@@ -1,0 +1,65 @@
+name: Deploy Orvuex AI to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+# Autorisations officielles requises pour publier sur GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Évite les conflits si tu fais plusieurs push d'affilée
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest # Utilise la machine virtuelle ultra-rapide de GitHub
+
+    steps:
+      # 1. Récupération de ton code source
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 2. Configuration du SDK Flutter avec mise en cache activée
+      - name: Configuration de Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true # Saute le téléchargement aux prochains lancements pour aller à fond
+
+      # 3. Installation des dépendances (Supabase, Gemini...) dans le cloud
+      - name: Installer les dépendances
+        run: |
+          cd orvuex_flutter
+          flutter pub get
+
+      # 4. Compilation officielle pour le Web (Optimisée et dynamique)
+      - name: Compilation Flutter Web
+        run: |
+          cd orvuex_flutter
+          flutter build web --base-href "/${{ github.event.repository.name }}/" --release
+
+      # 5. Configuration de l'environnement GitHub Pages
+      - name: Configuration de Pages
+        uses: actions/configure-pages@v5
+
+      # 6. Téléversement du site internet compilé
+      - name: Téléverser l'artéfact Web
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'orvuex_flutter/build/web'
+
+      # 7. Déploiement final et génération de ton lien de test
+      - name: Déployer sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
