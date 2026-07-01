@@ -24,7 +24,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle'
 
       # 3. Configuration du SDK Flutter officiel
       - name: Configuration de Flutter
@@ -49,6 +48,10 @@ jobs:
           cd orvuex_flutter
           # Ajouter les permissions au-dessus de la balise <application>
           sed -i '/<application/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.BLUETOOTH" />' android/app/src/main/AndroidManifest.xml
+          
+          # Assurer que minSdkVersion est 21
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle
           
           # Correction du bug jcenter() dans les dépendances en cache
           find ~/.pub-cache/hosted/pub.dev/ -name "build.gradle" -exec sed -i 's/jcenter()//g' {} +
