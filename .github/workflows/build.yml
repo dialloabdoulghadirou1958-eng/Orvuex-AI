@@ -44,6 +44,16 @@ jobs:
           cd orvuex_flutter
           flutter pub get
 
+      - name: Configuration des permissions Android et correction JCenter
+        run: |
+          cd orvuex_flutter
+          # Ajouter les permissions au-dessus de la balise <application>
+          sed -i '/<application/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.BLUETOOTH" />' android/app/src/main/AndroidManifest.xml
+          
+          # Correction du bug jcenter() dans les dépendances en cache
+          find ~/.pub-cache/hosted/pub.dev/ -name "build.gradle" -exec sed -i 's/jcenter()//g' {} +
+          find ~/.pub-cache/hosted/pub.dev/ -name "build.gradle.kts" -exec sed -i 's/jcenter()//g' {} +
+
       # 5. Compilation ciblée pour l'architecture ARM 64-bit (APK plus léger)
       - name: Compilation de l'APK spécifique (ARM64)
         run: |
