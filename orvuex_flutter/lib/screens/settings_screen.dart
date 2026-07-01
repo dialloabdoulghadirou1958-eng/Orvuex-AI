@@ -2,88 +2,259 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/settings_provider.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
-  DropdownMenuItem<String> _buildProviderItem(String value, String label, String iconPath) {
-    return DropdownMenuItem(
-      value: value,
-      child: Row(
-        children: [
-          Image.asset(
-            iconPath, 
-            width: 24, 
-            height: 24,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.smart_toy_outlined, size: 24, color: Colors.blueAccent),
-          ),
-          const SizedBox(width: 12),
-          Text(label),
-        ],
-      ),
-    );
-  }
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _obscureApiKey = true;
 
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
-    
+
+    final List<Map<String, String>> providers = [
+      {'id': 'gemini', 'name': 'Google Gemini', 'icon': 'assets/icons/gemini.png'},
+      {'id': 'openai', 'name': 'OpenAI', 'icon': 'assets/icons/openai.png'},
+      {'id': 'deepseek', 'name': 'DeepSeek', 'icon': 'assets/icons/deepseek.png'},
+      {'id': 'mistral', 'name': 'Mistral AI', 'icon': 'assets/icons/mistral.png'},
+      {'id': 'groq', 'name': 'Groq', 'icon': 'assets/icons/groq.png'},
+      {'id': 'openrouter', 'name': 'OpenRouter', 'icon': 'assets/icons/openrouter.png'},
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Paramètres')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Paramètres',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 12.0, bottom: 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Fournisseur IA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            DropdownButton<String>(
-              value: settings.selectedProvider,
-              isExpanded: true,
-              items: [
-                _buildProviderItem('openai', 'OpenAI', 'assets/icons/openai.png'),
-                _buildProviderItem('groq', 'Groq', 'assets/icons/groq.png'),
-                _buildProviderItem('deepseek', 'DeepSeek', 'assets/icons/deepseek.png'),
-                _buildProviderItem('mistral', 'Mistral', 'assets/icons/mistral.png'),
-                _buildProviderItem('openrouter', 'OpenRouter', 'assets/icons/openrouter.png'),
-                _buildProviderItem('gemini', 'Google Gemini', 'assets/icons/gemini.png'),
-              ],
-              onChanged: (val) {
-                if (val != null) settings.setProvider(val);
-              },
+            // Title for providers section
+            const Text(
+              'FOURNISSEURS D\'IA',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
             ),
-            const SizedBox(height: 20),
-            const Text('Modèle actif', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            DropdownButton<String>(
-              value: settings.selectedModel,
-              isExpanded: true,
-              items: SettingsProvider.modelsFor(settings.selectedProvider).map((model) {
-                return DropdownMenuItem<String>(
-                  value: model,
-                  child: Text(model),
+            const SizedBox(height: 12),
+
+            // Vertical list of provider cards
+            Column(
+              children: providers.map((prov) {
+                final String id = prov['id']!;
+                final String name = prov['name']!;
+                final String iconPath = prov['icon']!;
+                final bool isSelected = settings.selectedProvider == id;
+
+                return GestureDetector(
+                  onTap: () => settings.setProvider(id),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF1E1E1E) : const Color(0xFF0F0F11),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected 
+                            ? Colors.white.withOpacity(0.3) 
+                            : Colors.white.withOpacity(0.06),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // Vertical Alignment and Sizing of the Logo Asset
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            iconPath,
+                            width: 28,
+                            height: 28,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 28,
+                                height: 28,
+                                color: Colors.white.withOpacity(0.05),
+                                child: const Icon(Icons.smart_toy_outlined, size: 16, color: Colors.grey),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          )
+                        else
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 );
               }).toList(),
-              onChanged: (val) {
-                if (val != null) settings.setModel(val);
-              },
             ),
-            const SizedBox(height: 24),
-            const Text('Clé API', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            TextField(
-              obscureText: true,
-              decoration: const InputDecoration(
-                hintText: 'Entrez votre clé API...',
-              ),
-              onChanged: (val) => settings.setApiKey(val),
-              controller: TextEditingController(text: settings.apiKey)..selection = TextSelection.collapsed(offset: settings.apiKey.length),
-            ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 28),
+
+            // Active Model section
             const Text(
-              'Vos clés sont stockées localement sur votre appareil.',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            )
+              'MODÈLE ACTIF',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.06)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButtonFormField<String>(
+                  value: settings.selectedModel,
+                  dropdownColor: const Color(0xFF1E1E1E),
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  items: SettingsProvider.modelsFor(settings.selectedProvider).map((model) {
+                    return DropdownMenuItem<String>(
+                      value: model,
+                      child: Text(
+                        model,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) settings.setModel(val);
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 28),
+
+            // API Key section
+            const Text(
+              'CLÉ API',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.06)),
+              ),
+              child: TextField(
+                obscureText: _obscureApiKey,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Entrez votre clé API...',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 15),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureApiKey ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureApiKey = !_obscureApiKey;
+                      });
+                    },
+                  ),
+                ),
+                onChanged: (val) => settings.setApiKey(val),
+                controller: TextEditingController(text: settings.apiKey)
+                  ..selection = TextSelection.collapsed(offset: settings.apiKey.length),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.lock_outline_rounded, color: Colors.white.withOpacity(0.3), size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Vos clés sont stockées localement sur votre appareil.',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.35),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 }
+
