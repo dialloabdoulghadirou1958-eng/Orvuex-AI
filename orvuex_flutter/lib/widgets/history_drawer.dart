@@ -8,7 +8,13 @@ class HistoryDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFF171717),
+      backgroundColor: const Color(0xFF0F0F0F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
       child: SafeArea(
         child: Consumer<ChatProvider>(
           builder: (context, chatProvider, child) {
@@ -17,76 +23,131 @@ class HistoryDrawer extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Search Bar
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset(
-                          'assets/images/orvuex_logo.png',
-                          width: 32,
-                          height: 32,
-                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.blur_on, size: 32, color: Colors.blueAccent),
+                  padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0, bottom: 24.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1C1C1E),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, color: Colors.white54, size: 20),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Rechercher dans le contenu...',
+                            style: TextStyle(color: Colors.white54, fontSize: 15),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'orvuex ai',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.add, color: Colors.white),
-                  title: const Text('Nouveau chat', style: TextStyle(color: Colors.white)),
-                  onTap: () {
-                    chatProvider.createNewSession();
-                    Navigator.pop(context);
-                  },
-                ),
-                const Divider(color: Colors.white12),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text('Historique', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ),
+                
+                // History List
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: sessions.length,
-                    itemBuilder: (context, index) {
-                      final session = sessions[index];
-                      final isActive = chatProvider.activeSession?.id == session.id;
-                      
-                      return ListTile(
-                        leading: Icon(
-                          Icons.chat_bubble_outline, 
-                          color: isActive ? Colors.blueAccent : Colors.white54, 
-                          size: 20
-                        ),
-                        title: Text(
-                          session.title, 
-                          style: TextStyle(
-                            color: isActive ? Colors.white : Colors.white70, 
-                            fontSize: 14,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal
+                  child: sessions.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: 60.0),
+                            child: Text(
+                              'Aucune conversation',
+                              style: TextStyle(color: Colors.white54, fontSize: 16),
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.white38, size: 18),
-                          onPressed: () {
-                            chatProvider.deleteSession(session.id);
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: sessions.length,
+                          itemBuilder: (context, index) {
+                            final session = sessions[index];
+                            final isActive = chatProvider.activeSession?.id == session.id;
+                            
+                            return ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                              title: Text(
+                                session.title, 
+                                style: TextStyle(
+                                  color: isActive ? Colors.white : Colors.white70, 
+                                  fontSize: 15,
+                                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.white38, size: 18),
+                                onPressed: () {
+                                  chatProvider.deleteSession(session.id);
+                                },
+                              ),
+                              tileColor: isActive ? const Color(0xFF1C1C1E) : Colors.transparent,
+                              onTap: () {
+                                chatProvider.setActiveSession(session.id);
+                                Navigator.pop(context);
+                              },
+                            );
                           },
                         ),
-                        tileColor: isActive ? Colors.white.withOpacity(0.05) : null,
-                        onTap: () {
-                          chatProvider.setActiveSession(session.id);
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
+                ),
+                
+                // Bottom Profile Section
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        clipBehavior: Clip.hardEdge,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF1C1C1E),
+                        ),
+                        child: Image.asset(
+                          'assets/images/store_icone.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Text('👨🏻‍💻', style: TextStyle(fontSize: 22)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Abdoul Ghadirou Diallo',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'dialloabdoulghadirou1958@gmail.com',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

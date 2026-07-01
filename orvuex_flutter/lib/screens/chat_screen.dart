@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as dart_ui;
 import 'package:provider/provider.dart';
 import '../services/settings_provider.dart';
 import '../services/chat_provider.dart';
@@ -79,47 +80,270 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _showProviderModal(BuildContext context, SettingsProvider settings) {
+    final providers = [
+      {'id': 'gemini', 'label': 'Google Gemini', 'icon': 'assets/icons/gemini.png'},
+      {'id': 'openai', 'label': 'OpenAI', 'icon': 'assets/icons/openai.png'},
+      {'id': 'deepseek', 'label': 'DeepSeek', 'icon': 'assets/icons/deepseek.png'},
+      {'id': 'groq', 'label': 'Groq', 'icon': 'assets/icons/groq.png'},
+      {'id': 'mistral', 'label': 'Mistral', 'icon': 'assets/icons/mistral.png'},
+      {'id': 'openrouter', 'label': 'OpenRouter', 'icon': 'assets/icons/openrouter.png'},
+    ];
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withOpacity(0.4),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) => const SizedBox(),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return BackdropFilter(
+          filter: dart_ui.ImageFilter.blur(sigmaX: 10 * animation.value, sigmaY: 10 * animation.value),
+          child: FadeTransition(
+            opacity: curvedAnimation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(curvedAnimation),
+              child: Align(
+                alignment: Alignment.center,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.only(top: 16, bottom: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF161618),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 40,
+                          spreadRadius: 10,
+                        )
+                      ]
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          child: Text(
+                            'FOURNISSEURS',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: providers.map((p) {
+                                final isSelected = settings.selectedProvider == p['id'];
+                                return InkWell(
+                                  onTap: () {
+                                    settings.setProvider(p['id']!);
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? const Color(0xFF252436) : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Image.asset(
+                                          p['icon']!,
+                                          width: 20,
+                                          height: 20,
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, size: 20, color: Colors.white54),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Text(
+                                            p['label']!,
+                                            style: TextStyle(
+                                              color: isSelected ? Colors.blue.shade200 : Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isSelected)
+                                          Icon(Icons.check, color: Colors.blue.shade300, size: 20),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showModelModal(BuildContext context, SettingsProvider settings) {
+    final providerModels = SettingsProvider.modelsFor(settings.selectedProvider);
+    
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withOpacity(0.4),
+      transitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (context, animation, secondaryAnimation) => const SizedBox(),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return BackdropFilter(
+          filter: dart_ui.ImageFilter.blur(sigmaX: 10 * animation.value, sigmaY: 10 * animation.value),
+          child: FadeTransition(
+            opacity: curvedAnimation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(curvedAnimation),
+              child: Align(
+                alignment: Alignment.center,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.only(top: 16, bottom: 8),
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF161618),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.5),
+                          blurRadius: 40,
+                          spreadRadius: 10,
+                        )
+                      ]
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          child: Text(
+                            'MODÈLES',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Flexible(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: providerModels.length,
+                            itemBuilder: (context, index) {
+                              final model = providerModels[index];
+                              final isSelected = settings.selectedModel == model;
+                              return InkWell(
+                                onTap: () {
+                                  settings.setModel(model);
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? const Color(0xFF252436) : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          model,
+                                          style: TextStyle(
+                                            color: isSelected ? Colors.blue.shade200 : Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(Icons.check, color: Colors.blue.shade300, size: 20),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildProviderChip(SettingsProvider settings) {
     String displayName = 'OpenAI';
+    String iconPath = 'assets/icons/openai.png';
     switch (settings.selectedProvider) {
-      case 'openai': displayName = 'OpenAI'; break;
-      case 'groq': displayName = 'Groq'; break;
-      case 'deepseek': displayName = 'DeepSeek'; break;
-      case 'mistral': displayName = 'Mistral'; break;
-      case 'openrouter': displayName = 'OpenRouter'; break;
-      case 'gemini': displayName = 'Google...'; break;
+      case 'openai': displayName = 'OpenAI'; iconPath = 'assets/icons/openai.png'; break;
+      case 'groq': displayName = 'Groq'; iconPath = 'assets/icons/groq.png'; break;
+      case 'deepseek': displayName = 'DeepSeek'; iconPath = 'assets/icons/deepseek.png'; break;
+      case 'mistral': displayName = 'Mistral'; iconPath = 'assets/icons/mistral.png'; break;
+      case 'openrouter': displayName = 'OpenRouter'; iconPath = 'assets/icons/openrouter.png'; break;
+      case 'gemini': displayName = 'Google...'; iconPath = 'assets/icons/gemini.png'; break;
     }
     
-    return PopupMenuButton<String>(
-      initialValue: settings.selectedProvider,
-      onSelected: (String provider) {
-        settings.setProvider(provider);
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(value: 'openai', child: Text('OpenAI')),
-        const PopupMenuItem<String>(value: 'groq', child: Text('Groq')),
-        const PopupMenuItem<String>(value: 'deepseek', child: Text('DeepSeek')),
-        const PopupMenuItem<String>(value: 'mistral', child: Text('Mistral')),
-        const PopupMenuItem<String>(value: 'openrouter', child: Text('OpenRouter')),
-        const PopupMenuItem<String>(value: 'gemini', child: Text('Google Gemini')),
-      ],
+    return GestureDetector(
+      onTap: () => _showProviderModal(context, settings),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF161618),
+          color: const Color(0xFF1C1C1E),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: Colors.transparent),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (settings.selectedProvider == 'gemini') ...[
-              const Icon(Icons.stars, color: Colors.cyanAccent, size: 14),
-              const SizedBox(width: 6),
-            ] else ...[
-              const Icon(Icons.auto_awesome, color: Colors.white54, size: 14),
-              const SizedBox(width: 6),
-            ],
+            Image.asset(
+              iconPath,
+              width: 14,
+              height: 14,
+              errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, color: Colors.white54, size: 14),
+            ),
+            const SizedBox(width: 8),
             Text(
               displayName,
               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
@@ -133,7 +357,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildModelChip(SettingsProvider settings) {
-    final providerModels = SettingsProvider.modelsFor(settings.selectedProvider);
     String activeModel = settings.selectedModel;
     
     // Display name logic to match screenshot
@@ -144,23 +367,14 @@ class _ChatScreenState extends State<ChatScreen> {
       displayName = '${activeModel.substring(0, 10)}...';
     }
 
-    return PopupMenuButton<String>(
-      initialValue: activeModel,
-      onSelected: (String model) {
-        settings.setModel(model);
-      },
-      itemBuilder: (BuildContext context) => providerModels
-          .map((m) => PopupMenuItem<String>(
-                value: m,
-                child: Text(m),
-              ))
-          .toList(),
+    return GestureDetector(
+      onTap: () => _showModelModal(context, settings),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF161618),
+          color: const Color(0xFF1C1C1E),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: Colors.transparent),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -366,16 +580,18 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF161618),
+                      color: const Color(0xFF1C1C1E),
                       borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.white10, width: 0.5),
                     ),
                     child: Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           backgroundColor: Colors.transparent,
-                          radius: 18,
-                          child: Text('🧑‍💻', style: TextStyle(fontSize: 20)),
+                          radius: 14,
+                          child: Image.asset(
+                            'assets/images/store_icone.png',
+                            errorBuilder: (context, error, stackTrace) => const Text('👨🏻‍💻', style: TextStyle(fontSize: 18)),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -397,25 +613,16 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.mic, color: Colors.white60, size: 22),
-                          onPressed: () async {
-                            final text = await Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveVoiceScreen()));
-                            if (text != null && text is String && text.isNotEmpty && text != 'Écoute en cours...') {
-                              _controller.text = text;
-                            }
-                          },
-                        ),
                         GestureDetector(
                           onTap: _sendMessage,
                           child: Container(
                             width: 36,
                             height: 36,
                             decoration: const BoxDecoration(
-                              color: Colors.white,
+                              color: Color(0xFF2C2C2E),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.arrow_upward, color: Colors.black, size: 18),
+                            child: const Icon(Icons.arrow_upward, color: Colors.white54, size: 18),
                           ),
                         ),
                       ],
