@@ -63,84 +63,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Vertical list of provider cards
-            Column(
-              children: providers.map((prov) {
-                final String id = prov['id']!;
-                final String name = prov['name']!;
-                final String iconPath = prov['icon']!;
-                final bool isSelected = settings.selectedProvider == id;
+            // Horizontal list of provider cards
+            SizedBox(
+              height: 115,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: providers.length,
+                itemBuilder: (context, index) {
+                  final prov = providers[index];
+                  final String id = prov['id']!;
+                  final String name = prov['name']!;
+                  final String iconPath = prov['icon']!;
+                  final bool isSelected = settings.selectedProvider == id;
 
-                return GestureDetector(
-                  onTap: () => settings.setProvider(id),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF1E1E1E) : const Color(0xFF0F0F11),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected 
-                            ? Colors.white.withOpacity(0.3) 
-                            : Colors.white.withOpacity(0.06),
-                        width: 1.2,
+                  return GestureDetector(
+                    onTap: () => settings.setProvider(id),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 115,
+                      margin: EdgeInsets.only(
+                        right: index == providers.length - 1 ? 0 : 12,
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        // Vertical Alignment and Sizing of the Logo Asset
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.asset(
-                            iconPath,
-                            width: 28,
-                            height: 28,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 28,
-                                height: 28,
-                                color: Colors.white.withOpacity(0.05),
-                                child: const Icon(Icons.smart_toy_outlined, size: 16, color: Colors.grey),
-                              );
-                            },
-                          ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF1E1E1E) : const Color(0xFF0F0F11),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected 
+                              ? Colors.white.withOpacity(0.35) 
+                              : Colors.white.withOpacity(0.06),
+                          width: 1.5,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.05),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          )
+                        ] : [],
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset(
+                              iconPath,
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 32,
+                                  height: 32,
+                                  color: Colors.white.withOpacity(0.05),
+                                  child: const Icon(Icons.smart_toy_outlined, size: 18, color: Colors.grey),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
                             name,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
+                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.55),
+                              fontSize: 12,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                             ),
                           ),
-                        ),
-                        if (isSelected)
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          )
-                        else
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.15),
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                },
+              ),
             ),
 
             const SizedBox(height: 28),

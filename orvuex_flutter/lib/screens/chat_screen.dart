@@ -7,6 +7,7 @@ import '../services/chat_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'settings_screen.dart';
 import '../widgets/history_drawer.dart';
+import '../widgets/custom_zoom_drawer.dart';
 import 'live_voice_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -16,27 +17,17 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
 
-  bool _isDrawerOpen = false;
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<Offset> _slideAnimation;
+  final GlobalKey<CustomZoomDrawerState> _drawerKey = GlobalKey<CustomZoomDrawerState>();
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onTextChanged);
-    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)
-    );
-    _slideAnimation = Tween<Offset>(begin: Offset.zero, end: const Offset(0.75, 0.0)).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)
-    );
   }
 
   void _onTextChanged() {
@@ -46,21 +37,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _controller.removeListener(_onTextChanged);
-    _animationController.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _toggleDrawer() {
-    setState(() {
-      _isDrawerOpen = !_isDrawerOpen;
-      if (_isDrawerOpen) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
   }
 
   void _sendMessage() async {
@@ -457,27 +436,12 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
-      body: Stack(
-        children: [
-          HistoryDrawer(onClose: _toggleDrawer),
-          SlideTransition(
-            position: _slideAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              alignment: Alignment.centerLeft,
-              child: GestureDetector(
-                onTap: _isDrawerOpen ? _toggleDrawer : null,
-                child: AbsorbPointer(
-                  absorbing: _isDrawerOpen,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(_isDrawerOpen ? 32.0 : 0.0),
-                    child: _buildMainScaffold(settings),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+      body: CustomZoomDrawer(
+        key: _drawerKey,
+        menuScreen: HistoryDrawer(
+          onClose: () => _drawerKey.currentState?.close(),
+        ),
+        mainScreen: _buildMainScaffold(settings),
       ),
     );
   }
@@ -490,8 +454,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white, size: 26),
-          onPressed: _toggleDrawer,
+          icon: const MinimalistMenuIcon(),
+          onPressed: () => _drawerKey.currentState?.toggle(),
         ),
         actions: [
           Consumer<ChatProvider>(
@@ -737,6 +701,41 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class MinimalistMenuIcon extends StatelessWidget {
+  final Color color;
+  const MinimalistMenuIcon({super.key, this.color = Colors.white});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 18,
+            height: 2.0,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Container(
+            width: 11,
+            height: 2.0,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
       ),
     );
   }
