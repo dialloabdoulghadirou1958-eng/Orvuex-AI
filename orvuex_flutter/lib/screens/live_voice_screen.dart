@@ -64,7 +64,7 @@ class _LiveVoiceScreenState extends State<LiveVoiceScreen> with SingleTickerProv
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.keyboard_arrow_down, size: 32, color: Colors.white),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32, color: Colors.white),
           onPressed: () => Navigator.pop(context, _text), // Returns the spoken text
         ),
       ),
@@ -100,7 +100,7 @@ class _LiveVoiceScreenState extends State<LiveVoiceScreen> with SingleTickerProv
                         color: _isListening ? Colors.white : Colors.grey,
                       ),
                       child: Icon(
-                        _isListening ? Icons.graphic_eq : Icons.mic_off, 
+                        _isListening ? Icons.graphic_eq_rounded : Icons.mic_off_rounded, 
                         color: Colors.black, 
                         size: 50
                       ),
@@ -112,7 +112,7 @@ class _LiveVoiceScreenState extends State<LiveVoiceScreen> with SingleTickerProv
             const SizedBox(height: 100),
             IconButton(
               iconSize: 64,
-              icon: const Icon(Icons.stop_circle, color: Colors.redAccent),
+              icon: const Icon(Icons.stop_circle_rounded, color: Colors.redAccent),
               onPressed: () {
                 _speech.stop();
                 setState(() => _isListening = false);

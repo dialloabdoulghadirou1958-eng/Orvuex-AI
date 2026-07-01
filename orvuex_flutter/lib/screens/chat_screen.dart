@@ -202,7 +202,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                           p['icon']!,
                                           width: 20,
                                           height: 20,
-                                          errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, size: 20, color: Colors.white54),
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 20, color: Colors.white54),
                                         ),
                                         const SizedBox(width: 16),
                                         Expanded(
@@ -216,7 +216,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                           ),
                                         ),
                                         if (isSelected)
-                                          Icon(Icons.check, color: Colors.blue.shade300, size: 20),
+                                          Icon(Icons.check_rounded, color: Colors.blue.shade300, size: 20),
                                       ],
                                     ),
                                   ),
@@ -328,7 +328,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                         ),
                                       ),
                                       if (isSelected)
-                                        Icon(Icons.check, color: Colors.blue.shade300, size: 20),
+                                        Icon(Icons.check_rounded, color: Colors.blue.shade300, size: 20),
                                     ],
                                   ),
                                 ),
@@ -377,7 +377,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
               iconPath,
               width: 14,
               height: 14,
-              errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, color: Colors.white54, size: 14),
+              errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, color: Colors.white54, size: 14),
             ),
             const SizedBox(width: 8),
             Text(
@@ -525,7 +525,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                           end: Alignment.bottomRight,
                                         ),
                                       ),
-                                      child: const Icon(Icons.auto_awesome, size: 70, color: Colors.white),
+                                      child: const Icon(Icons.hexagon_outlined, size: 60, color: Colors.white),
                                     );
                                   },
                                 ),
@@ -578,7 +578,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                       radius: 14,
                                       child: Image.asset(
                                         'assets/images/orvuex_logo.png',
-                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, size: 14, color: Colors.cyan),
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.star_rounded, size: 14, color: Colors.cyan),
                                       ),
                                     ),
                                   ),
