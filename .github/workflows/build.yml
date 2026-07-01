@@ -53,15 +53,24 @@ jobs:
           if [ -f android/app/build.gradle ]; then
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
             sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle
+            sed -i 's/minSdk flutter.minSdkVersion/minSdk 21/g' android/app/build.gradle
           fi
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle.kts
             sed -i 's/minSdkVersion = flutter.minSdkVersion.get()/minSdkVersion = 21/g' android/app/build.gradle.kts
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle.kts
+            sed -i 's/minSdk = flutter.minSdkVersion.get()/minSdk = 21/g' android/app/build.gradle.kts
           fi
           
           # Correction du bug jcenter() dans les dépendances en cache
-          find ~/.pub-cache/hosted/pub.dev/ -name "build.gradle" -exec sed -i 's/jcenter()//g' {} +
-          find ~/.pub-cache/hosted/pub.dev/ -name "build.gradle.kts" -exec sed -i 's/jcenter()//g' {} +
+          find /home/runner/.pub-cache/ -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+          find /home/runner/.pub-cache/ -name "build.gradle.kts" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
+          
+          # Fix NPE in speech_to_text or old plugins
+          mkdir -p android/app
+          echo "android.builder.sdkDownload=false" >> android/gradle.properties
+          echo "android.nonTransitiveRClass=false" >> android/gradle.properties
 
       # 5. Compilation ciblée pour l'architecture ARM 64-bit (APK plus léger)
       - name: Compilation de l'APK spécifique (ARM64)
