@@ -536,27 +536,29 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                     ),
                                   ],
                                 ),
-                                child: Image.asset(
-                                  'assets/images/orvuex_logo.png',
-                                  width: 140,
-                                  height: 140,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    // Fallback SVG-like or simple circular custom representation
-                                    return Container(
-                                      width: 140,
-                                      height: 140,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [Colors.purple, Colors.blue, Colors.cyan],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    'assets/images/orvuex_logo.png',
+                                    width: 140,
+                                    height: 140,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      // Fallback SVG-like or simple circular custom representation
+                                      return Container(
+                                        width: 140,
+                                        height: 140,
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [Colors.purple, Colors.blue, Colors.cyan],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
                                         ),
-                                      ),
-                                      child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
-                                    );
-                                  },
+                                        child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 16),
