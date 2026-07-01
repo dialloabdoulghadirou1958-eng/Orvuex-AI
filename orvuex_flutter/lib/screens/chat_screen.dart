@@ -47,7 +47,12 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      final stream = ChatService.sendMessageStream(text, settings.apiKey, settings.selectedProvider);
+      final stream = ChatService.sendMessageStream(
+        text, 
+        settings.apiKey, 
+        settings.selectedProvider,
+        model: settings.selectedModel,
+      );
       await for (final chunk in stream) {
         chatProvider.appendToLastMessage(chunk);
         _scrollToBottom();
@@ -74,21 +79,136 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  Widget _buildProviderChip(SettingsProvider settings) {
+    String displayName = 'OpenAI';
+    switch (settings.selectedProvider) {
+      case 'openai': displayName = 'OpenAI'; break;
+      case 'groq': displayName = 'Groq'; break;
+      case 'deepseek': displayName = 'DeepSeek'; break;
+      case 'mistral': displayName = 'Mistral'; break;
+      case 'openrouter': displayName = 'OpenRouter'; break;
+      case 'gemini': displayName = 'Google...'; break;
+    }
+    
+    return PopupMenuButton<String>(
+      initialValue: settings.selectedProvider,
+      onSelected: (String provider) {
+        settings.setProvider(provider);
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(value: 'openai', child: Text('OpenAI')),
+        const PopupMenuItem<String>(value: 'groq', child: Text('Groq')),
+        const PopupMenuItem<String>(value: 'deepseek', child: Text('DeepSeek')),
+        const PopupMenuItem<String>(value: 'mistral', child: Text('Mistral')),
+        const PopupMenuItem<String>(value: 'openrouter', child: Text('OpenRouter')),
+        const PopupMenuItem<String>(value: 'gemini', child: Text('Google Gemini')),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF161618),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (settings.selectedProvider == 'gemini') ...[
+              const Icon(Icons.stars, color: Colors.cyanAccent, size: 14),
+              const SizedBox(width: 6),
+            ] else ...[
+              const Icon(Icons.auto_awesome, color: Colors.white54, size: 14),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              displayName,
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModelChip(SettingsProvider settings) {
+    final providerModels = SettingsProvider.modelsFor(settings.selectedProvider);
+    String activeModel = settings.selectedModel;
+    
+    // Display name logic to match screenshot
+    String displayName = activeModel;
+    if (settings.selectedProvider == 'gemini') {
+      displayName = 'Gemini...';
+    } else if (activeModel.length > 12) {
+      displayName = '${activeModel.substring(0, 10)}...';
+    }
+
+    return PopupMenuButton<String>(
+      initialValue: activeModel,
+      onSelected: (String model) {
+        settings.setModel(model);
+      },
+      itemBuilder: (BuildContext context) => providerModels
+          .map((m) => PopupMenuItem<String>(
+                value: m,
+                child: Text(m),
+              ))
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF161618),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              displayName,
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
+    
     return Scaffold(
+      backgroundColor: Colors.black,
       drawer: const HistoryDrawer(),
       appBar: AppBar(
-        title: const Text('orvuex ai'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white70),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
+          Consumer<ChatProvider>(
+            builder: (context, chatProvider, _) => IconButton(
+              icon: const Icon(Icons.edit_square, color: Colors.white70),
+              onPressed: () {
+                chatProvider.createNewSession();
+              },
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings, color: Colors.white70),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
-          )
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Consumer<ChatProvider>(
@@ -100,10 +220,76 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Expanded(
                 child: messages.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Posez-moi une question...',
-                          style: TextStyle(color: Colors.white54, fontSize: 16),
+                    ? SingleChildScrollView(
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * 0.70,
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Swirl Logo with Glowing Back-shadows
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.purpleAccent.withOpacity(0.15),
+                                      blurRadius: 50,
+                                      spreadRadius: 15,
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.cyanAccent.withOpacity(0.1),
+                                      blurRadius: 40,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: Image.asset(
+                                  'assets/images/orvuex_logo.png',
+                                  width: 150,
+                                  height: 150,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Fallback SVG-like or simple circular custom representation
+                                    return Container(
+                                      width: 150,
+                                      height: 150,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Colors.purple, Colors.blue, Colors.cyan],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: const Icon(Icons.auto_awesome, size: 70, color: Colors.white),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // Title
+                              const Text(
+                                'orvuex ai',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              // Chips Row
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildProviderChip(settings),
+                                  const SizedBox(width: 12),
+                                  _buildModelChip(settings),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -121,12 +307,16 @@ class _ChatScreenState extends State<ChatScreen> {
                               mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
                               children: [
                                 if (!isUser) ...[
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 8.0),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
                                     child: CircleAvatar(
                                       backgroundColor: Colors.white10,
-                                      backgroundImage: AssetImage('assets/images/orvuex_logo.png'),
+                                      backgroundImage: const AssetImage('assets/images/orvuex_logo.png'),
                                       radius: 14,
+                                      child: Image.asset(
+                                        'assets/images/orvuex_logo.png',
+                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, size: 14, color: Colors.cyan),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -136,15 +326,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                     margin: const EdgeInsets.only(bottom: 16),
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: isUser ? Colors.white24 : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(12),
+                                      color: isUser ? Colors.white12 : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                     constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.80),
                                     child: MarkdownBody(
                                       data: msg.content,
                                       selectable: true,
                                       styleSheet: MarkdownStyleSheet(
-                                        p: const TextStyle(color: Colors.white, fontSize: 16),
+                                        p: const TextStyle(color: Colors.white, fontSize: 16, height: 1.4),
                                         code: TextStyle(backgroundColor: Colors.black45, color: Colors.greenAccent[100], fontFamily: 'monospace'),
                                         codeblockPadding: const EdgeInsets.all(8),
                                         codeblockDecoration: BoxDecoration(
@@ -167,50 +357,69 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white70)),
                   ),
                 ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          maxLines: 4,
-                          minLines: 1,
-                          decoration: InputDecoration(
-                            hintText: 'Envoyer un message...',
-                            filled: true,
-                            fillColor: Colors.white10,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF161618),
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: Colors.white10, width: 0.5),
+                    ),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          radius: 18,
+                          child: Text('🧑‍💻', style: TextStyle(fontSize: 20)),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            maxLines: 4,
+                            minLines: 1,
+                            style: const TextStyle(color: Colors.white, fontSize: 15),
+                            decoration: InputDecoration(
+                              hintText: settings.selectedProvider == 'gemini'
+                                  ? 'Répondre à Google Gemini'
+                                  : 'Répondre à ${settings.selectedProvider[0].toUpperCase()}${settings.selectedProvider.substring(1)}',
+                              hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.mic, color: Colors.white70),
-                              onPressed: () async {
-                                final text = await Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveVoiceScreen()));
-                                if (text != null && text is String && text.isNotEmpty && text != 'Écoute en cours...') {
-                                  _controller.text = text;
-                                }
-                              },
-                            ),
+                            onSubmitted: (_) => _sendMessage(),
                           ),
-                          onSubmitted: (_) => _sendMessage(),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_upward, color: Colors.black),
-                          onPressed: _sendMessage,
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.mic, color: Colors.white60, size: 22),
+                          onPressed: () async {
+                            final text = await Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveVoiceScreen()));
+                            if (text != null && text is String && text.isNotEmpty && text != 'Écoute en cours...') {
+                              _controller.text = text;
+                            }
+                          },
                         ),
-                      )
-                    ],
+                        GestureDetector(
+                          onTap: _sendMessage,
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.arrow_upward, color: Colors.black, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               )
