@@ -43,6 +43,12 @@ jobs:
           cd orvuex_flutter
           flutter pub get
 
+      # 3.5 Activer le support Web (génère les fichiers indispensables si absents)
+      - name: Activer le support Web
+        run: |
+          cd orvuex_flutter
+          flutter create . --platforms web
+
       # 4. Compilation officielle pour le Web (Optimisée et dynamique)
       - name: Compilation Flutter Web
         run: |
