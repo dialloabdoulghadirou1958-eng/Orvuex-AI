@@ -9,7 +9,7 @@ class SettingsProvider with ChangeNotifier {
   }
 
   String _apiKey = '';
-  String _selectedProvider = 'openai';
+  String _selectedProvider = 'gemini';
   String _selectedModel = '';
 
   String get apiKey => _apiKey;
@@ -46,7 +46,7 @@ class SettingsProvider with ChangeNotifier {
 
   void _loadSettings() {
     _apiKey = _prefs.getString('api_key') ?? '';
-    _selectedProvider = _prefs.getString('provider') ?? 'openai';
+    _selectedProvider = _prefs.getString('provider') ?? 'gemini';
     _selectedModel = _prefs.getString('selected_model') ?? '';
     notifyListeners();
   }

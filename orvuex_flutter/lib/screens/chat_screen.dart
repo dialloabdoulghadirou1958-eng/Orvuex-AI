@@ -29,6 +29,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    _controller.addListener(_onTextChanged);
     _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic)
@@ -38,8 +39,13 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     );
   }
 
+  void _onTextChanged() {
+    setState(() {});
+  }
+
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _animationController.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -364,28 +370,36 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     return GestureDetector(
       onTap: () => _showProviderModal(context, settings),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.transparent),
+          color: const Color(0xFF1E1E22),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.08), width: 0.8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
               iconPath,
-              width: 14,
-              height: 14,
-              errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, color: Colors.white54, size: 14),
+              width: 15,
+              height: 15,
+              errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome_rounded, color: Colors.cyanAccent, size: 14),
             ),
             const SizedBox(width: 8),
             Text(
               displayName,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Colors.white, 
+                fontSize: 14, 
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white60, size: 16),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.keyboard_arrow_down_rounded, 
+              color: Colors.white.withOpacity(0.4), 
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -406,21 +420,29 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     return GestureDetector(
       onTap: () => _showModelModal(context, settings),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.transparent),
+          color: const Color(0xFF1E1E22),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.08), width: 0.8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               displayName,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Colors.white, 
+                fontSize: 14, 
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white60, size: 16),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.keyboard_arrow_down_rounded, 
+              color: Colors.white.withOpacity(0.4), 
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -464,21 +486,22 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Colors.white70),
+          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
           onPressed: _toggleDrawer,
         ),
         actions: [
           Consumer<ChatProvider>(
             builder: (context, chatProvider, _) => IconButton(
-              icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+              icon: const Icon(Icons.edit_square, color: Colors.white, size: 24),
               onPressed: () {
                 chatProvider.createNewSession();
               },
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white70),
+            icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 24),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
@@ -495,28 +518,34 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             children: [
               Expanded(
                 child: messages.isEmpty
-                    ? SingleChildScrollView(
-                        child: Container(
-                          height: MediaQuery.of(context).size.height * 0.70,
-                          alignment: Alignment.center,
+                    ? Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               // Swirl Logo with Glowing Back-shadows
                               Container(
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF6B4EFF).withOpacity(0.12),
+                                      blurRadius: 40,
+                                      spreadRadius: 8,
+                                    ),
+                                  ],
                                 ),
                                 child: Image.asset(
                                   'assets/images/orvuex_logo.png',
-                                  width: 110,
-                                  height: 110,
+                                  width: 140,
+                                  height: 140,
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) {
                                     // Fallback SVG-like or simple circular custom representation
                                     return Container(
-                                      width: 150,
-                                      height: 150,
+                                      width: 140,
+                                      height: 140,
                                       decoration: const BoxDecoration(
                                         shape: BoxShape.circle,
                                         gradient: LinearGradient(
@@ -525,7 +554,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                           end: Alignment.bottomRight,
                                         ),
                                       ),
-                                      child: const Icon(Icons.hexagon_outlined, size: 60, color: Colors.white),
+                                      child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
                                     );
                                   },
                                 ),
@@ -536,12 +565,12 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                 'orvuex ai',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.5,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.8,
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 24),
                               // Chips Row
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -573,12 +602,14 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                   Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: CircleAvatar(
-                                      backgroundColor: Colors.white10,
-                                      backgroundImage: const AssetImage('assets/images/orvuex_logo.png'),
+                                      backgroundColor: Colors.transparent,
                                       radius: 14,
-                                      child: Image.asset(
-                                        'assets/images/orvuex_logo.png',
-                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.star_rounded, size: 14, color: Colors.cyan),
+                                      child: ClipOval(
+                                        child: Image.asset(
+                                          'assets/images/orvuex_logo.png',
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.star_rounded, size: 14, color: Colors.cyan),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -625,53 +656,75 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                 ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.only(left: 18.0, right: 18.0, bottom: 16.0, top: 8.0),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1E),
+                      color: const Color(0xFF1E1E22),
                       borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: Colors.white.withOpacity(0.08), width: 0.8),
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.transparent,
-                          radius: 14,
+                        Container(
+                          width: 28,
+                          height: 28,
+                          alignment: Alignment.center,
                           child: Image.asset(
                             'assets/images/store_icone.png',
-                            errorBuilder: (context, error, stackTrace) => const Text('👨🏻‍💻', style: TextStyle(fontSize: 18)),
+                            errorBuilder: (context, error, stackTrace) => const Text(
+                              '🧑‍💻',
+                              style: TextStyle(fontSize: 20),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
                             controller: _controller,
-                            maxLines: 4,
+                            maxLines: 5,
                             minLines: 1,
-                            style: const TextStyle(color: Colors.white, fontSize: 15),
+                            style: const TextStyle(
+                              color: Colors.white, 
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
                             decoration: InputDecoration(
                               hintText: settings.selectedProvider == 'gemini'
                                   ? 'Répondre à Google Gemini'
                                   : 'Répondre à ${settings.selectedProvider[0].toUpperCase()}${settings.selectedProvider.substring(1)}',
-                              hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+                              hintStyle: TextStyle(
+                                color: Colors.white.withOpacity(0.4), 
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                              ),
                               border: InputBorder.none,
                               isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 8),
                             ),
                             onSubmitted: (_) => _sendMessage(),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         GestureDetector(
                           onTap: _sendMessage,
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2C2C2E),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: _controller.text.trim().isNotEmpty 
+                                  ? Colors.white.withOpacity(0.15) 
+                                  : const Color(0xFF2D2D31),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.arrow_upward_rounded, color: Colors.white54, size: 18),
+                            child: Icon(
+                              Icons.arrow_upward_rounded, 
+                              color: _controller.text.trim().isNotEmpty 
+                                  ? Colors.white 
+                                  : Colors.white.withOpacity(0.4), 
+                              size: 18,
+                            ),
                           ),
                         ),
                       ],

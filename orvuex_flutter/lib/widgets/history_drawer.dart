@@ -105,15 +105,15 @@ class HistoryDrawer extends StatelessWidget {
                         width: 40,
                         height: 40,
                         clipBehavior: Clip.hardEdge,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: const Color(0xFF1C1C1E),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF1C1C1E),
                         ),
                         child: Image.asset(
-                          'assets/images/store_icone.png',
+                          'assets/images/orvuex_logo.png',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const Center(
-                            child: Text('👨🏻‍💻', style: TextStyle(fontSize: 22)),
+                            child: Icon(Icons.person, color: Colors.white54),
                           ),
                         ),
                       ),
