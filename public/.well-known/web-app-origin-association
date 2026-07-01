@@ -1,7 +1,0 @@
-{
-  "web_apps": [
-    {
-      "manifest": "/manifest.json"
-    }
-  ]
-}
