@@ -5,6 +5,24 @@ import '../services/settings_provider.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  DropdownMenuItem<String> _buildProviderItem(String value, String label, String iconPath) {
+    return DropdownMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Image.asset(
+            iconPath, 
+            width: 24, 
+            height: 24,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.smart_toy, size: 24, color: Colors.blueAccent),
+          ),
+          const SizedBox(width: 12),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
@@ -20,13 +38,13 @@ class SettingsScreen extends StatelessWidget {
             DropdownButton<String>(
               value: settings.selectedProvider,
               isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
-                DropdownMenuItem(value: 'groq', child: Text('Groq')),
-                DropdownMenuItem(value: 'deepseek', child: Text('DeepSeek')),
-                DropdownMenuItem(value: 'mistral', child: Text('Mistral')),
-                DropdownMenuItem(value: 'openrouter', child: Text('OpenRouter')),
-                DropdownMenuItem(value: 'gemini', child: Text('Google Gemini')),
+              items: [
+                _buildProviderItem('openai', 'OpenAI', 'assets/icons/openai.png'),
+                _buildProviderItem('groq', 'Groq', 'assets/icons/groq.png'),
+                _buildProviderItem('deepseek', 'DeepSeek', 'assets/icons/deepseek.png'),
+                _buildProviderItem('mistral', 'Mistral', 'assets/icons/mistral.png'),
+                _buildProviderItem('openrouter', 'OpenRouter', 'assets/icons/openrouter.png'),
+                _buildProviderItem('gemini', 'Google Gemini', 'assets/icons/gemini.png'),
               ],
               onChanged: (val) {
                 if (val != null) settings.setProvider(val);

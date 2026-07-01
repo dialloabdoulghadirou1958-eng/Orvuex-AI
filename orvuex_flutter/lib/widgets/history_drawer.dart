@@ -17,11 +17,25 @@ class HistoryDrawer extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'orvuex ai',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/images/orvuex_logo.png',
+                          width: 32,
+                          height: 32,
+                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.blur_on, size: 32, color: Colors.blueAccent),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'orvuex ai',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ],
                   ),
                 ),
                 ListTile(

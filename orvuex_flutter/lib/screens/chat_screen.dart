@@ -115,27 +115,47 @@ class _ChatScreenState extends State<ChatScreen> {
                           final isUser = msg.role == 'user';
                           return Align(
                             alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: isUser ? Colors.white24 : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.85),
-                              child: MarkdownBody(
-                                data: msg.content,
-                                selectable: true,
-                                styleSheet: MarkdownStyleSheet(
-                                  p: const TextStyle(color: Colors.white, fontSize: 16),
-                                  code: TextStyle(backgroundColor: Colors.black45, color: Colors.greenAccent[100], fontFamily: 'monospace'),
-                                  codeblockPadding: const EdgeInsets.all(8),
-                                  codeblockDecoration: BoxDecoration(
-                                    color: Colors.black45,
-                                    borderRadius: BorderRadius.circular(8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                              children: [
+                                if (!isUser) ...[
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 8.0),
+                                    child: CircleAvatar(
+                                      backgroundColor: Colors.white10,
+                                      backgroundImage: AssetImage('assets/images/orvuex_logo.png'),
+                                      radius: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Flexible(
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: isUser ? Colors.white24 : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.80),
+                                    child: MarkdownBody(
+                                      data: msg.content,
+                                      selectable: true,
+                                      styleSheet: MarkdownStyleSheet(
+                                        p: const TextStyle(color: Colors.white, fontSize: 16),
+                                        code: TextStyle(backgroundColor: Colors.black45, color: Colors.greenAccent[100], fontFamily: 'monospace'),
+                                        codeblockPadding: const EdgeInsets.all(8),
+                                        codeblockDecoration: BoxDecoration(
+                                          color: Colors.black45,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
                           );
                         },
@@ -171,8 +191,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.mic, color: Colors.white70),
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveVoiceScreen()));
+                              onPressed: () async {
+                                final text = await Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveVoiceScreen()));
+                                if (text != null && text is String && text.isNotEmpty && text != 'Écoute en cours...') {
+                                  _controller.text = text;
+                                }
                               },
                             ),
                           ),
