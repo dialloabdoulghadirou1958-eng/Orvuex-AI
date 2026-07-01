@@ -1,1 +1,77 @@
+name: Build Orvuex AI Optimized APK
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupération du code source
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      # 2. Configuration de l'environnement Java JDK 17
+      - name: Configuration de Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      # 3. Configuration du SDK Flutter officiel
+      - name: Configuration de Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # 4. Installer les dépendances Flutter (Supabase, Gemini...)
+      - name: Installer les dépendances Flutter
+        run: flutter pub get
+
+      # 5. Compilation ciblée pour l'architecture ARM 64-bit (APK plus léger)
+      - name: Compilation de l'APK spécifique (ARM64)
+        run: flutter build apk --release --target-platform android-arm64
+
+      # 6. Alignement et signature sous le nom "Orvuex AI.apk"
+      - name: Signature manuelle et renommage
+        run: |
+          echo "=== Configuration des outils Android ==="
+          BUILD_TOOLS_DIR=$(ls -d ${ANDROID_HOME}/build-tools/* | tail -n 1)
+          export PATH=$PATH:$BUILD_TOOLS_DIR
+          echo "Utilisation des outils dans : $BUILD_TOOLS_DIR"
+          
+          echo "=== Génération de la clé de débogage temporaire ==="
+          keytool -genkey -v -keystore debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA \
+            -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          
+          echo "=== Alignement de l'APK Flutter ==="
+          APK_RAW=$(find build/app/outputs/flutter-apk/ -name "*release*.apk" -type f | head -n 1)
+          echo "APK brut trouvé : $APK_RAW"
+          zipalign -v 4 "$APK_RAW" aligned.apk
+          
+          echo "=== Signature et renommage en Orvuex AI.apk ==="
+          # Utilisation des guillemets pour gérer l'espace dans le nom "Orvuex AI.apk"
+          apksigner sign --ks debug.keystore --ks-pass pass:android \
+            --key-pass pass:android --out "Orvuex AI.apk" aligned.apk
+            
+          echo "=== Vérification finale ==="
+          apksigner verify "Orvuex AI.apk"
+
+      # 7. Extraction de l'APK final prêt à installer
+      - name: Téléverser l'APK Orvuex AI
+        uses: actions/upload-artifact@v4
+        with:
+          name: Orvuex-AI-ARM64-APK
+          path: 'Orvuex AI.apk'
+          if-no-files-found: error
 
