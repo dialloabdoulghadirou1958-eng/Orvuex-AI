@@ -356,14 +356,14 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildProviderChip(SettingsProvider settings) {
-    String displayName = 'OpenAI';
-    String iconPath = 'assets/icons/openai.png';
+    String displayName = 'Google...';
+    String iconPath = 'assets/icons/gemini.png';
     switch (settings.selectedProvider) {
-      case 'openai': displayName = 'OpenAI'; iconPath = 'assets/icons/openai.png'; break;
-      case 'groq': displayName = 'Groq'; iconPath = 'assets/icons/groq.png'; break;
-      case 'deepseek': displayName = 'DeepSeek'; iconPath = 'assets/icons/deepseek.png'; break;
-      case 'mistral': displayName = 'Mistral'; iconPath = 'assets/icons/mistral.png'; break;
-      case 'openrouter': displayName = 'OpenRouter'; iconPath = 'assets/icons/openrouter.png'; break;
+      case 'openai': displayName = 'OpenAI...'; iconPath = 'assets/icons/openai.png'; break;
+      case 'groq': displayName = 'Groq...'; iconPath = 'assets/icons/groq.png'; break;
+      case 'deepseek': displayName = 'DeepSeek...'; iconPath = 'assets/icons/deepseek.png'; break;
+      case 'mistral': displayName = 'Mistral...'; iconPath = 'assets/icons/mistral.png'; break;
+      case 'openrouter': displayName = 'OpenRouter...'; iconPath = 'assets/icons/openrouter.png'; break;
       case 'gemini': displayName = 'Google...'; iconPath = 'assets/icons/gemini.png'; break;
     }
     
@@ -372,18 +372,18 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E22),
+          color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.08), width: 0.8),
+          border: Border.all(color: Colors.white.withOpacity(0.06), width: 0.8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
               iconPath,
-              width: 15,
-              height: 15,
-              errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome_rounded, color: Colors.cyanAccent, size: 14),
+              width: 14,
+              height: 14,
+              errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 14, color: Colors.grey),
             ),
             const SizedBox(width: 8),
             Text(
@@ -396,8 +396,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             ),
             const SizedBox(width: 6),
             Icon(
-              Icons.keyboard_arrow_down_rounded, 
-              color: Colors.white.withOpacity(0.4), 
+              Icons.keyboard_arrow_down, 
+              color: Colors.white.withOpacity(0.5), 
               size: 16,
             ),
           ],
@@ -410,11 +410,13 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     String activeModel = settings.selectedModel;
     
     // Display name logic to match screenshot
-    String displayName = activeModel;
-    if (settings.selectedProvider == 'gemini') {
-      displayName = 'Gemini...';
-    } else if (activeModel.length > 12) {
-      displayName = '${activeModel.substring(0, 10)}...';
+    String displayName = 'Gemini...';
+    if (settings.selectedProvider != 'gemini') {
+      if (activeModel.length > 10) {
+        displayName = '${activeModel.substring(0, 8)}...';
+      } else {
+        displayName = activeModel;
+      }
     }
 
     return GestureDetector(
@@ -422,9 +424,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E22),
+          color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.08), width: 0.8),
+          border: Border.all(color: Colors.white.withOpacity(0.06), width: 0.8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -439,8 +441,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
             ),
             const SizedBox(width: 6),
             Icon(
-              Icons.keyboard_arrow_down_rounded, 
-              color: Colors.white.withOpacity(0.4), 
+              Icons.keyboard_arrow_down, 
+              color: Colors.white.withOpacity(0.5), 
               size: 16,
             ),
           ],
@@ -488,20 +490,20 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
+          icon: const Icon(Icons.menu, color: Colors.white, size: 26),
           onPressed: _toggleDrawer,
         ),
         actions: [
           Consumer<ChatProvider>(
             builder: (context, chatProvider, _) => IconButton(
-              icon: const Icon(Icons.edit_square, color: Colors.white, size: 24),
+              icon: const Icon(Icons.edit_note, color: Colors.white, size: 28),
               onPressed: () {
                 chatProvider.createNewSession();
               },
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 24),
+            icon: const Icon(Icons.settings, color: Colors.white, size: 24),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
             },
@@ -524,52 +526,55 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Swirl Logo with Glowing Back-shadows
+                              // Swirl Logo on dark background with subtle glow (no white background)
                               Container(
-                                width: 140,
-                                height: 140,
+                                width: 130,
+                                height: 130,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF6B4EFF).withOpacity(0.12),
+                                      color: const Color(0xFF6B4EFF).withOpacity(0.08),
                                       blurRadius: 40,
-                                      spreadRadius: 8,
+                                      spreadRadius: 4,
                                     ),
                                   ],
                                 ),
-                                padding: const EdgeInsets.all(12),
                                 child: Image.asset(
                                   'assets/images/orvuex_logo.png',
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) {
-                                    // Fallback SVG-like or simple circular custom representation
-                                    return Container(
-                                      width: 140,
-                                      height: 140,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [Colors.purple, Colors.blue, Colors.cyan],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                      ),
-                                      child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
+                                    return Image.asset(
+                                      'assets/logo.png',
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: 130,
+                                          height: 130,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            gradient: LinearGradient(
+                                              colors: [Colors.purple, Colors.blue, Colors.cyan],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                          ),
+                                          child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
+                                        );
+                                      },
                                     );
                                   },
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 24),
                               // Title
                               const Text(
                                 'orvuex ai',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 36,
+                                  fontSize: 34,
                                   fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.8,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -578,7 +583,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   _buildProviderChip(settings),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
                                   _buildModelChip(settings),
                                 ],
                               ),
@@ -659,29 +664,24 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                 ),
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 18.0, right: 18.0, bottom: 16.0, top: 8.0),
+                  padding: const EdgeInsets.only(left: 18.0, right: 18.0, bottom: 20.0, top: 8.0),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E22),
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: Colors.white.withOpacity(0.08), width: 0.8),
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Colors.white.withOpacity(0.05), width: 0.8),
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          alignment: Alignment.center,
-                          child: Image.asset(
-                            'assets/images/store_icone.png',
-                            errorBuilder: (context, error, stackTrace) => const Text(
-                              '🧑‍💻',
-                              style: TextStyle(fontSize: 20),
-                            ),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4.0, right: 8.0),
+                          child: Text(
+                            '👨‍💻',
+                            style: TextStyle(fontSize: 22),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _controller,
@@ -708,21 +708,20 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                             onSubmitted: (_) => _sendMessage(),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: _sendMessage,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            width: 38,
-                            height: 38,
+                          child: Container(
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
                               color: _controller.text.trim().isNotEmpty 
-                                  ? Colors.white.withOpacity(0.15) 
+                                  ? const Color(0xFF3A3A3F)
                                   : const Color(0xFF2D2D31),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              Icons.arrow_upward_rounded, 
+                              Icons.arrow_upward, 
                               color: _controller.text.trim().isNotEmpty 
                                   ? Colors.white 
                                   : Colors.white.withOpacity(0.4), 
