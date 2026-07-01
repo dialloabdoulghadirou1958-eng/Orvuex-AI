@@ -4,6 +4,8 @@ import '../services/settings_provider.dart';
 import '../services/chat_service.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'settings_screen.dart';
+import '../widgets/history_drawer.dart';
+import 'live_voice_screen.dart';
 
 class ChatMessage {
   final String role;
@@ -78,6 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const HistoryDrawer(),
       appBar: AppBar(
         title: const Text('orvuex ai'),
         backgroundColor: Colors.transparent,
@@ -144,6 +147,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.mic, color: Colors.white70),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveVoiceScreen()));
+                          },
+                        ),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),

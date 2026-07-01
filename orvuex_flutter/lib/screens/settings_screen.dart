@@ -23,6 +23,10 @@ class SettingsScreen extends StatelessWidget {
               items: const [
                 DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
                 DropdownMenuItem(value: 'groq', child: Text('Groq')),
+                DropdownMenuItem(value: 'deepseek', child: Text('DeepSeek')),
+                DropdownMenuItem(value: 'mistral', child: Text('Mistral')),
+                DropdownMenuItem(value: 'openrouter', child: Text('OpenRouter')),
+                DropdownMenuItem(value: 'gemini', child: Text('Google Gemini')),
               ],
               onChanged: (val) {
                 if (val != null) settings.setProvider(val);

@@ -19,6 +19,22 @@ class ChatService {
         url = 'https://api.groq.com/openai/v1/chat/completions';
         model = 'llama3-8b-8192';
         break;
+      case 'deepseek':
+        url = 'https://api.deepseek.com/chat/completions';
+        model = 'deepseek-chat';
+        break;
+      case 'mistral':
+        url = 'https://api.mistral.ai/v1/chat/completions';
+        model = 'mistral-large-latest';
+        break;
+      case 'openrouter':
+        url = 'https://openrouter.ai/api/v1/chat/completions';
+        model = 'google/gemini-pro';
+        break;
+      case 'gemini':
+        url = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        model = 'gemini-1.5-pro-latest';
+        break;
       default:
         url = 'https://api.openai.com/v1/chat/completions';
         model = 'gpt-3.5-turbo';
