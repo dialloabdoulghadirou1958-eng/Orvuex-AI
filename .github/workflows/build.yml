@@ -29,7 +29,6 @@ jobs:
       - name: Configuration de Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.2'
           channel: 'stable'
           cache: true
 
@@ -46,6 +45,7 @@ jobs:
       - name: Installer les dépendances Flutter
         run: |
           cd orvuex_flutter
+          flutter pub upgrade --major-versions speech_to_text flutter_tts
           flutter pub get
 
       - name: Configuration des permissions Android et correction JCenter
