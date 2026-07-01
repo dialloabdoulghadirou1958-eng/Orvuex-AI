@@ -526,8 +526,11 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                             children: [
                               // Swirl Logo with Glowing Back-shadows
                               Container(
+                                width: 140,
+                                height: 140,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  color: Colors.white,
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(0xFF6B4EFF).withOpacity(0.12),
@@ -536,29 +539,26 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                     ),
                                   ],
                                 ),
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    'assets/images/orvuex_logo.png',
-                                    width: 140,
-                                    height: 140,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      // Fallback SVG-like or simple circular custom representation
-                                      return Container(
-                                        width: 140,
-                                        height: 140,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          gradient: LinearGradient(
-                                            colors: [Colors.purple, Colors.blue, Colors.cyan],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
+                                padding: const EdgeInsets.all(12),
+                                child: Image.asset(
+                                  'assets/images/orvuex_logo.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    // Fallback SVG-like or simple circular custom representation
+                                    return Container(
+                                      width: 140,
+                                      height: 140,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Colors.purple, Colors.blue, Colors.cyan],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
                                         ),
-                                        child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
-                                      );
-                                    },
-                                  ),
+                                      ),
+                                      child: const Icon(Icons.hexagon_outlined, size: 55, color: Colors.white),
+                                    );
+                                  },
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -604,12 +604,13 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                   Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
                                     child: CircleAvatar(
-                                      backgroundColor: Colors.transparent,
+                                      backgroundColor: Colors.white,
                                       radius: 14,
-                                      child: ClipOval(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(3),
                                         child: Image.asset(
                                           'assets/images/orvuex_logo.png',
-                                          fit: BoxFit.cover,
+                                          fit: BoxFit.contain,
                                           errorBuilder: (context, error, stackTrace) => const Icon(Icons.star_rounded, size: 14, color: Colors.cyan),
                                         ),
                                       ),
