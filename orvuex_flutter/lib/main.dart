@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/chat_screen.dart';
 import 'services/settings_provider.dart';
+import 'services/chat_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider(prefs)),
+        ChangeNotifierProvider(create: (_) => ChatProvider(prefs)),
       ],
       child: const OrvuexAiApp(),
     ),

@@ -13,6 +13,7 @@ dependencies:
   shared_preferences: ^2.2.1
   provider: ^6.0.5
   flutter_markdown: ^0.6.17
+  uuid: ^4.1.0
 
 dev_dependencies:
   flutter_test:
