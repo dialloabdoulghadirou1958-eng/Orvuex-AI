@@ -90,10 +90,13 @@ class AiProviderLogoWidget extends StatelessWidget {
       fit: BoxFit.contain,
       color: color,
       errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          Icons.smart_toy_outlined,
-          size: size,
-          color: color ?? Colors.grey,
+        return Tooltip(
+          message: 'Error loading asset: $error',
+          child: Icon(
+            Icons.smart_toy_outlined,
+            size: size,
+            color: color ?? Colors.grey,
+          ),
         );
       },
     );
