@@ -1,43 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/chat_provider.dart';
+import '../models/chat_session.dart';
 
 class HistoryDrawer extends StatelessWidget {
   final VoidCallback? onClose;
   
   const HistoryDrawer({super.key, this.onClose});
 
+  Map<String, List<ChatSession>> _groupSessions(List<ChatSession> sessions) {
+    final Map<String, List<ChatSession>> groups = {};
+    for (var session in sessions) {
+      final label = _getGroupLabel(session.createdAt);
+      groups.putIfAbsent(label, () => []).add(session);
+    }
+    return groups;
+  }
+
+  String _getGroupLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final sessionDate = DateTime(date.year, date.month, date.day);
+    final difference = today.difference(sessionDate).inDays;
+    
+    if (difference <= 7) {
+      return '7 jours';
+    } else if (difference <= 30) {
+      return '30 jours';
+    } else {
+      const months = [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+      ];
+      if (date.month >= 1 && date.month <= 12) {
+        return '${months[date.month - 1]} ${date.year}';
+      }
+      return 'Plus ancien';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final sidebarWidth = MediaQuery.of(context).size.width * 0.82;
+    
     return Container(
-      width: MediaQuery.of(context).size.width * 0.75,
+      width: sidebarWidth,
       height: double.infinity,
       color: const Color(0xFF0F0F0F),
       child: SafeArea(
         child: Consumer<ChatProvider>(
           builder: (context, chatProvider, child) {
             final sessions = chatProvider.sessions;
+            final grouped = _groupSessions(sessions);
             
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Search Bar
+                // 1. Search Bar (Haut)
                 Padding(
-                  padding: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0, bottom: 24.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Container(
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1C1C1E),
+                      color: const Color(0xFF161618),
                       borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.04),
+                        width: 1,
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
-                        const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+                        Icon(
+                          Icons.search_rounded, 
+                          color: Colors.white.withOpacity(0.4), 
+                          size: 20
+                        ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Rechercher dans le contenu...',
-                            style: TextStyle(color: Colors.white54, fontSize: 15),
+                            'Rechercher dans le contenu du ch...',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.4), 
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -46,105 +94,178 @@ class HistoryDrawer extends StatelessWidget {
                   ),
                 ),
                 
-                // History List
+                const SizedBox(height: 12),
+                
+                // 2. Zone de Liste (Centre - Scrollable)
                 Expanded(
                   child: sessions.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(bottom: 60.0),
-                            child: Text(
-                              'Aucune conversation',
-                              style: TextStyle(color: Colors.white54, fontSize: 16),
+                      ? Center(
+                          child: Text(
+                            'Aucune discussion',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.35), 
+                              fontSize: 15
                             ),
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemCount: sessions.length,
-                          itemBuilder: (context, index) {
-                            final session = sessions[index];
-                            final isActive = chatProvider.activeSession?.id == session.id;
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: 20.0),
+                          itemCount: grouped.length,
+                          itemBuilder: (context, groupIdx) {
+                            final key = grouped.keys.elementAt(groupIdx);
+                            final groupSessions = grouped[key]!;
                             
-                            return ListTile(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                              title: Text(
-                                session.title, 
-                                style: TextStyle(
-                                  color: isActive ? Colors.white : Colors.white70, 
-                                  fontSize: 15,
-                                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Category Header (20dp à 24dp d'espace avant chaque titre sauf le premier)
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    left: 16.0, 
+                                    right: 16.0, 
+                                    top: groupIdx == 0 ? 12.0 : 24.0, 
+                                    bottom: 12.0
+                                  ),
+                                  child: Text(
+                                    key,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.35),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.white38, size: 18),
-                                onPressed: () {
-                                  chatProvider.deleteSession(session.id);
-                                },
-                              ),
-                              tileColor: isActive ? const Color(0xFF1C1C1E) : Colors.transparent,
-                              onTap: () {
-                                chatProvider.setActiveSession(session.id);
-                                if (onClose != null) onClose!();
-                              },
+                                
+                                // Group Items
+                                ...groupSessions.map((session) {
+                                  final isActive = chatProvider.activeSession?.id == session.id;
+                                  return Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        chatProvider.setActiveSession(session.id);
+                                        if (onClose != null) onClose!();
+                                      },
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0, 
+                                          vertical: 12.0
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                session.title,
+                                                style: TextStyle(
+                                                  color: isActive 
+                                                      ? Colors.white 
+                                                      : Colors.white.withOpacity(0.7),
+                                                  fontSize: 15,
+                                                  fontWeight: isActive 
+                                                      ? FontWeight.w600 
+                                                      : FontWeight.w400,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            // Subtle elegant delete button
+                                            IconButton(
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                              icon: Icon(
+                                                Icons.delete_outline_rounded, 
+                                                color: Colors.white.withOpacity(0.18), 
+                                                size: 16
+                                              ),
+                                              onPressed: () {
+                                                chatProvider.deleteSession(session.id);
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
                             );
                           },
                         ),
                 ),
                 
-                // Bottom Profile Section
+                // Subtle divider above profile section
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                  height: 1,
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                  color: Colors.white.withOpacity(0.04),
+                ),
+                
+                // 3. Élément Profil (Bas - Ancré de façon rigide)
+                Container(
+                  height: 64,
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   child: Row(
                     children: [
+                      // Circular Avatar
                       Container(
                         width: 40,
                         height: 40,
                         clipBehavior: Clip.hardEdge,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2193b0), Color(0xFF6dd5ed)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                         ),
-                        padding: const EdgeInsets.all(4),
-                        child: Image.asset(
-                          'assets/images/orvuex_logo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Center(
-                            child: Icon(Icons.person, color: Colors.white54),
+                        child: Center(
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/orvuex_logo.png',
+                              width: 36,
+                              height: 36,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.person, 
+                                color: Colors.white, 
+                                size: 20
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 14),
+                      
+                      // Name
                       const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Abdoul Ghadirou Diallo',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'dialloabdoulghadirou1958@gmail.com',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 13,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                        child: Text(
+                          'Abdoul ghadirou Diallo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      
+                      // Three dots menu button
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.more_horiz_rounded, 
+                          color: Colors.white.withOpacity(0.45), 
+                          size: 20
+                        ),
+                        onPressed: () {},
                       ),
                     ],
                   ),

@@ -13,9 +13,9 @@ class CustomZoomDrawer extends StatefulWidget {
     super.key,
     required this.menuScreen,
     required this.mainScreen,
-    this.scaleDown = 0.85,
-    this.slidePercent = 0.78, // Translate X to reveal menu
-    this.borderRadius = const BorderRadius.all(Radius.circular(24.0)),
+    this.scaleDown = 0.93,
+    this.slidePercent = 0.82, // Translate X to reveal 82% of the menu
+    this.borderRadius = const BorderRadius.all(Radius.circular(28.0)),
     this.duration = const Duration(milliseconds: 320),
     this.curve = Curves.fastOutSlowIn,
   });
