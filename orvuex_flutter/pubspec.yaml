@@ -25,5 +25,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icons/
+    - assets/icons/gemini.png
+    - assets/icons/openai.png
+    - assets/icons/deepseek.png
+    - assets/icons/mistral.png
+    - assets/icons/groq.png
+    - assets/icons/openrouter.png
     - assets/images/
