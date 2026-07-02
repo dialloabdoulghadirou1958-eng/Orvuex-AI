@@ -163,54 +163,80 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Flexible(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: providers.map((p) {
-                                final isSelected = settings.selectedProvider == p['id'];
-                                return InkWell(
-                                  onTap: () {
-                                    settings.setProvider(p['id']!);
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? const Color(0xFF252436) : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(16),
+                        SizedBox(
+                          height: 120,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: providers.length,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemBuilder: (context, index) {
+                              final p = providers[index];
+                              final isSelected = settings.selectedProvider == p['id'];
+                              return GestureDetector(
+                                onTap: () {
+                                  settings.setProvider(p['id']!);
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  width: 110,
+                                  margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? const Color(0xFF252436) : const Color(0xFF1E1E22),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isSelected 
+                                          ? const Color(0xFF5D59A6).withOpacity(0.5) 
+                                          : Colors.white.withOpacity(0.05),
+                                      width: isSelected ? 2.0 : 1.0,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Image.asset(
-                                          p['icon']!,
-                                          width: 20,
-                                          height: 20,
-                                          errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 20, color: Colors.white54),
+                                    boxShadow: isSelected ? [
+                                      BoxShadow(
+                                        color: const Color(0xFF5D59A6).withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      )
+                                    ] : null,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(isSelected ? 0.08 : 0.03),
+                                          shape: BoxShape.circle,
                                         ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Text(
-                                            p['label']!,
-                                            style: TextStyle(
-                                              color: isSelected ? Colors.blue.shade200 : Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                            ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Image.asset(
+                                            p['icon']!,
+                                            width: 28,
+                                            height: 28,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 28, color: Colors.white54),
                                           ),
                                         ),
-                                        if (isSelected)
-                                          Icon(Icons.check_rounded, color: Colors.blue.shade300, size: 20),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        p['label']!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: isSelected ? Colors.white : Colors.white70,
+                                          fontSize: 12,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }).toList(),
-                            ),
+                                ),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),

@@ -41,7 +41,7 @@ class HistoryDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sidebarWidth = MediaQuery.of(context).size.width * 0.82;
+    final sidebarWidth = MediaQuery.of(context).size.width * 0.74;
     
     return Container(
       width: sidebarWidth,

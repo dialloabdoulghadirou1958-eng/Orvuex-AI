@@ -14,7 +14,7 @@ class CustomZoomDrawer extends StatefulWidget {
     required this.menuScreen,
     required this.mainScreen,
     this.scaleDown = 0.93,
-    this.slidePercent = 0.82, // Translate X to reveal 82% of the menu
+    this.slidePercent = 0.74, // Translate X to reveal 74% of the screen, leaving 26% of the chat visible
     this.borderRadius = const BorderRadius.all(Radius.circular(28.0)),
     this.duration = const Duration(milliseconds: 320),
     this.curve = Curves.fastOutSlowIn,
