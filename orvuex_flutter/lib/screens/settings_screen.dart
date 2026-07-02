@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/settings_provider.dart';
+import '../widgets/ai_provider_logo.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -106,22 +107,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.asset(
-                              iconPath,
-                              width: 32,
-                              height: 32,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 32,
-                                  height: 32,
-                                  color: Colors.white.withOpacity(0.05),
-                                  child: const Icon(Icons.smart_toy_outlined, size: 18, color: Colors.grey),
-                                );
-                              },
-                            ),
+                          AiProviderLogoWidget(
+                            providerId: id,
+                            size: 32,
                           ),
                           const SizedBox(height: 10),
                           Text(

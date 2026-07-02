@@ -9,6 +9,7 @@ import 'settings_screen.dart';
 import '../widgets/history_drawer.dart';
 import '../widgets/custom_zoom_drawer.dart';
 import 'live_voice_screen.dart';
+import '../widgets/ai_provider_logo.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -207,15 +208,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           color: Colors.white.withOpacity(isSelected ? 0.08 : 0.03),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(4),
-                                          child: Image.asset(
-                                            p['icon']!,
-                                            width: 28,
-                                            height: 28,
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 28, color: Colors.white54),
-                                          ),
+                                        child: AiProviderLogoWidget(
+                                          providerId: p['id']!,
+                                          size: 28,
                                         ),
                                       ),
                                       const SizedBox(height: 8),
@@ -362,14 +357,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildProviderChip(SettingsProvider settings) {
     String displayName = 'Google...';
-    String iconPath = 'assets/icons/gemini.png';
     switch (settings.selectedProvider) {
-      case 'openai': displayName = 'OpenAI...'; iconPath = 'assets/icons/openai.png'; break;
-      case 'groq': displayName = 'Groq...'; iconPath = 'assets/icons/groq.png'; break;
-      case 'deepseek': displayName = 'DeepSeek...'; iconPath = 'assets/icons/deepseek.png'; break;
-      case 'mistral': displayName = 'Mistral...'; iconPath = 'assets/icons/mistral.png'; break;
-      case 'openrouter': displayName = 'OpenRouter...'; iconPath = 'assets/icons/openrouter.png'; break;
-      case 'gemini': displayName = 'Google...'; iconPath = 'assets/icons/gemini.png'; break;
+      case 'openai': displayName = 'OpenAI...'; break;
+      case 'groq': displayName = 'Groq...'; break;
+      case 'deepseek': displayName = 'DeepSeek...'; break;
+      case 'mistral': displayName = 'Mistral...'; break;
+      case 'openrouter': displayName = 'OpenRouter...'; break;
+      case 'gemini': displayName = 'Google...'; break;
     }
     
     return GestureDetector(
@@ -384,11 +378,9 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              iconPath,
-              width: 14,
-              height: 14,
-              errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 14, color: Colors.grey),
+            AiProviderLogoWidget(
+              providerId: settings.selectedProvider,
+              size: 14,
             ),
             const SizedBox(width: 8),
             Text(
